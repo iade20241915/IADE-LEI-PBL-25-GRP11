@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
+import '../screens/mood_inquiry_screen.dart';
+import '../screens/water_intake_screen.dart';
+import '../screens/sleep_time_screen.dart';
+import '../screens/mood_inquiry2_screen.dart';
 
 class HabittusDrawer extends StatelessWidget {
   final String userName;
+  final bool isDashboard;
 
-  const HabittusDrawer({super.key, required this.userName});
+  const HabittusDrawer({
+    super.key,
+    required this.userName,
+    this.isDashboard = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final label = isDashboard ? 'Voltar ao Login' : 'Voltar';
+
     return Drawer(
       backgroundColor: Colors.white,
       child: SafeArea(
@@ -47,12 +58,24 @@ class HabittusDrawer extends StatelessWidget {
                     _MenuItem(
                       icon: Icons.emoji_emotions_outlined,
                       label: 'Humor',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const MoodInquiryScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _MenuItem(
                       icon: Icons.water_drop_outlined,
                       label: 'Hidratação',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const WaterIntakeScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _MenuItem(
                       icon: Icons.restaurant_outlined,
@@ -62,7 +85,13 @@ class HabittusDrawer extends StatelessWidget {
                     _MenuItem(
                       icon: Icons.bed_outlined,
                       label: 'Sono',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SleepTimeScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _MenuItem(
                       icon: Icons.directions_run_outlined,
@@ -89,7 +118,7 @@ class HabittusDrawer extends StatelessWidget {
 
                     _MenuItem(
                       icon: Icons.arrow_back,
-                      label: 'Voltar ao Dashboard',
+                      label: label,
                       onTap: () => Navigator.pop(context),
                     ),
                   ],

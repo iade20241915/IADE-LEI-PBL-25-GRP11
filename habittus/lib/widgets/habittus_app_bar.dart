@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import '../screens/register_screen.dart';
 
 class HabittusAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const HabittusAppBar({super.key});
+  final bool showBack;
+
+  const HabittusAppBar({super.key, this.showBack = false});
 
   @override
   Widget build(BuildContext context) {
@@ -9,19 +12,39 @@ class HabittusAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Colors.transparent,
       elevation: 0,
 
-      leading: Builder(
-        builder: (ctx) => IconButton(
-          icon: const Icon(Icons.menu, color: Colors.green),
-          onPressed: () {
-            Scaffold.of(ctx).openDrawer(); // <-- ISTO abre o menu
-          },
-        ),
+      leadingWidth: showBack ? 96 : null,
+
+      leading: Row(
+        children: [
+          // BOTÃO MENU (drawer)
+          Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu, color: Colors.green),
+              onPressed: () {
+                Scaffold.of(ctx).openDrawer();
+              },
+            ),
+          ),
+
+          // BOTÃO BACK (opcional)
+          if (showBack)
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.green),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+        ],
       ),
 
-      actions: const [
-        Padding(
-          padding: EdgeInsets.only(right: 12),
-          child: Icon(Icons.person_outline, color: Colors.green),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.person_outline, color: Colors.green),
+          onPressed: () {
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const RegisterScreen()));
+          },
         ),
       ],
     );

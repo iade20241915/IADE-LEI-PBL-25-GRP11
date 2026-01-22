@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../core/app_routes.dart';
-import '../widgets/date_selector.dart';
 import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_card.dart';
 import '../widgets/habittus_drawer.dart';
@@ -18,7 +17,7 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const DateSelector(day: '25', month: 'September', year: '2025'),
+            //const DateSelector(day: '25', month: 'September', year: '2025'),
             const SizedBox(height: 16),
 
             HabittusCard(

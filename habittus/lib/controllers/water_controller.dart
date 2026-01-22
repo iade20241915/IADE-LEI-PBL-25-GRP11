@@ -13,13 +13,33 @@ class WaterController extends ChangeNotifier {
 
   int cups = 0;
 
+  /// Logs dos últimos 7 dias (inclui dias sem registos com cups=0),
+  /// ordenados do mais antigo -> mais recente.
+  List<WaterLog> weekLogs = const [];
+
   int get totalMl => cups * defaultMlPerCup;
 
   Future<void> load(DateTime date) async {
-    selectedDate = date;
-    final log = await _repo.getForDate(date);
+    selectedDate = _dateOnly(date);
+
+    final log = await _repo.getForDate(selectedDate);
     cups = log?.cups ?? 0;
+
+    await _loadWeek();
     notifyListeners();
+  }
+
+  Future<void> _loadWeek() async {
+    final end = selectedDate;
+    final start = end.subtract(const Duration(days: 6));
+
+    final List<WaterLog> logs = [];
+    for (int i = 0; i < 7; i++) {
+      final day = _dateOnly(start.add(Duration(days: i)));
+      final log = await _repo.getForDate(day);
+      logs.add(log ?? WaterLog(date: day, mlPerCup: defaultMlPerCup, cups: 0));
+    }
+    weekLogs = List.unmodifiable(logs);
   }
 
   Future<void> toggleCup(int index, {required int gridSize}) async {
@@ -33,6 +53,10 @@ class WaterController extends ChangeNotifier {
     await _repo.save(
       WaterLog(date: selectedDate, mlPerCup: defaultMlPerCup, cups: cups),
     );
+
+    await _loadWeek();
     notifyListeners();
   }
+
+  DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 }
