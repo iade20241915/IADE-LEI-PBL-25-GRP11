@@ -10,7 +10,11 @@ import '../widgets/primary_button.dart';
 import '../widgets/habittus_drawer.dart';
 
 class MoodInquiryScreen extends StatefulWidget {
-  const MoodInquiryScreen({super.key});
+  /// ✅ Define se o utilizador é do sexo feminino.
+  /// (temporário até existir ProfileController / género vindo do Supabase)
+  final bool isFemale;
+
+  const MoodInquiryScreen({super.key, this.isFemale = true});
 
   @override
   State<MoodInquiryScreen> createState() => _MoodInquiryScreenState();
@@ -29,6 +33,14 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
   final Set<String> food = {};
   final Set<String> weather = {};
   final TextEditingController notesCtrl = TextEditingController();
+
+  // ====== (NOVO) sexo feminino ======
+  bool? tookPillToday; // contraceção
+  bool? hadSexToday; // atividade sexual
+  bool? usedProtection; // proteção (só faz sentido se hadSexToday == true)
+
+  final Set<String> menstruationSymptoms = {}; // multi
+  String? menstrualFlow; // single
 
   @override
   void initState() {
@@ -65,6 +77,13 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
     food.clear();
     weather.clear();
     notesCtrl.clear();
+
+    // limpar feminino
+    tookPillToday = null;
+    hadSexToday = null;
+    usedProtection = null;
+    menstruationSymptoms.clear();
+    menstrualFlow = null;
   }
 
   String get monthName => const [
@@ -282,6 +301,90 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
             }),
           ),
         ),
+
+        // =========================
+        // ✅ NOVO: Secção feminina
+        // =========================
+        if (widget.isFemale) ...[
+          const SizedBox(height: 12),
+
+          _SectionCard(
+            icon: Icons.medication_outlined,
+            title: 'Contraceção',
+            subtitle: 'Marca se tomaste a pílula hoje.',
+            child: _YesNoToggle(
+              question: 'Tomaste a pílula hoje?',
+              value: tookPillToday,
+              onChanged: (v) => setState(() => tookPillToday = v),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          _SectionCard(
+            icon: Icons.favorite_outline,
+            title: 'Atividade sexual',
+            subtitle: 'Regista se tiveste relações sexuais hoje.',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _YesNoToggle(
+                  question: 'Tiveste atividade sexual hoje?',
+                  value: hadSexToday,
+                  onChanged: (v) => setState(() {
+                    hadSexToday = v;
+                    // se não houve, remove a proteção
+                    if (v != true) usedProtection = null;
+                  }),
+                ),
+                const SizedBox(height: 10),
+                AnimatedCrossFade(
+                  firstChild: const SizedBox.shrink(),
+                  secondChild: _YesNoToggle(
+                    question: 'Usaste proteção?',
+                    value: usedProtection,
+                    onChanged: (v) => setState(() => usedProtection = v),
+                  ),
+                  crossFadeState: hadSexToday == true
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                  duration: const Duration(milliseconds: 160),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          _SectionCard(
+            icon: Icons.spa_outlined,
+            title: 'Sintomas da menstruação',
+            subtitle: 'Que alterações sentiste durante a menstruação?',
+            child: _MenstruationSymptomsGrid(
+              selected: menstruationSymptoms,
+              onToggle: (id) => setState(() {
+                if (menstruationSymptoms.contains(id)) {
+                  menstruationSymptoms.remove(id);
+                } else {
+                  menstruationSymptoms.add(id);
+                }
+              }),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          _SectionCard(
+            icon: Icons.water_drop_outlined,
+            title: 'Fluxo menstrual',
+            subtitle: 'Como classificas o teu fluxo?',
+            child: _MenstrualFlowGrid(
+              selectedId: menstrualFlow,
+              onSelect: (id) => setState(() => menstrualFlow = id),
+            ),
+          ),
+        ],
+
         const SizedBox(height: 12),
 
         _SectionCard(
@@ -417,7 +520,7 @@ class _MoodGrid extends StatelessWidget {
                       it.label,
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: FontWeight.w600, // não muda ao selecionar
+                        fontWeight: FontWeight.w600,
                         color: isSelected
                             ? Colors.green.shade900
                             : Colors.black87,
@@ -451,7 +554,7 @@ class _MoodItem {
   const _MoodItem(this.label, this.level, this.icon);
 }
 
-/* ===================== UI (antigo mood_inquiry2) ===================== */
+/* ===================== UI helpers ===================== */
 
 class _SmallPill extends StatelessWidget {
   final String text;
@@ -647,6 +750,225 @@ class _ChoiceButton extends StatelessWidget {
             Text(
               label,
               maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 11),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/* ===================== NOVO: Feminino ===================== */
+
+class _YesNoToggle extends StatelessWidget {
+  final String question;
+  final bool? value;
+  final ValueChanged<bool?> onChanged;
+
+  const _YesNoToggle({
+    required this.question,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final yesSelected = value == true;
+    final noSelected = value == false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          question,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _PillChoice(
+                text: 'Sim',
+                selected: yesSelected,
+                onTap: () => onChanged(true),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _PillChoice(
+                text: 'Não',
+                selected: noSelected,
+                onTap: () => onChanged(false),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _PillChoice extends StatelessWidget {
+  final String text;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _PillChoice({
+    required this.text,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFE4EAD8) : const Color(0xFFF6F8F0),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? const Color(0xFF7FA57F) : const Color(0xFFD9E1D0),
+            width: 2,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            text,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MenstruationSymptomsGrid extends StatelessWidget {
+  final Set<String> selected;
+  final ValueChanged<String> onToggle;
+
+  const _MenstruationSymptomsGrid({
+    required this.selected,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const items = [
+      _Choice(id: 'Dor lombar', icon: Icons.back_hand_outlined),
+      _Choice(id: 'Barriga inchada', icon: Icons.bubble_chart_outlined),
+      _Choice(id: 'Aumento do apetite', icon: Icons.restaurant_outlined),
+      _Choice(id: 'Dor de cabeça', icon: Icons.psychology_outlined),
+      _Choice(id: 'Tonturas', icon: Icons.sync_alt_outlined),
+      _Choice(id: 'Enjoos', icon: Icons.sick_outlined),
+      _Choice(id: 'Borbulhas', icon: Icons.blur_on_outlined),
+      _Choice(id: 'Cólicas', icon: Icons.airline_seat_recline_normal_outlined),
+      _Choice(id: 'Seios sensíveis', icon: Icons.favorite_border),
+      _Choice(id: 'Sangramento', icon: Icons.water_drop_outlined),
+    ];
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 10,
+      runSpacing: 10,
+      children: items.map((c) {
+        final isSelected = selected.contains(c.id);
+        return _RoundIconChoice(
+          label: c.id,
+          icon: c.icon,
+          selected: isSelected,
+          onTap: () => onToggle(c.id),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _MenstrualFlowGrid extends StatelessWidget {
+  final String? selectedId;
+  final ValueChanged<String> onSelect;
+
+  const _MenstrualFlowGrid({required this.selectedId, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    const items = [
+      _Choice(id: 'Spots', icon: Icons.water_drop_outlined),
+      _Choice(id: 'Muito leve', icon: Icons.water_drop_outlined),
+      _Choice(id: 'Leve', icon: Icons.water_drop_outlined),
+      _Choice(id: 'Moderado', icon: Icons.water_drop_outlined),
+      _Choice(id: 'Intenso', icon: Icons.water_drop_outlined),
+      _Choice(id: 'Muito intenso', icon: Icons.water_drop_outlined),
+    ];
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 12,
+      runSpacing: 12,
+      children: items.map((c) {
+        final isSelected = selectedId == c.id;
+        return _RoundIconChoice(
+          label: c.id,
+          icon: c.icon,
+          selected: isSelected,
+          onTap: () => onSelect(c.id),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _RoundIconChoice extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _RoundIconChoice({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        width: 96,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFE4EAD8) : const Color(0xFFF6F8F0),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected ? const Color(0xFF7FA57F) : const Color(0xFFD9E1D0),
+            width: 2,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE4EAD8),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: const Color(0xFF244A24), size: 18),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 11),
               textAlign: TextAlign.center,
