@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../screens/mood_inquiry_screen.dart';
 import '../screens/water_intake_screen.dart';
 import '../screens/sleep_time_screen.dart';
-import '../screens/mood_inquiry2_screen.dart';
+import '../screens/meals_screen.dart';
+import '../screens/physical_activity_screen.dart';
+import '../screens/habits_screen.dart';
 
 class HabittusDrawer extends StatelessWidget {
   final String userName;
@@ -80,7 +82,13 @@ class HabittusDrawer extends StatelessWidget {
                     _MenuItem(
                       icon: Icons.restaurant_outlined,
                       label: 'Alimentação',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const MealsScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _MenuItem(
                       icon: Icons.bed_outlined,
@@ -96,12 +104,24 @@ class HabittusDrawer extends StatelessWidget {
                     _MenuItem(
                       icon: Icons.directions_run_outlined,
                       label: 'Atividade Física',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const PhysicalActivityScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _MenuItem(
                       icon: Icons.no_drinks_outlined,
                       label: 'Hábitos e Vícios',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const HabitsScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _MenuItem(
                       icon: Icons.calendar_month_outlined,

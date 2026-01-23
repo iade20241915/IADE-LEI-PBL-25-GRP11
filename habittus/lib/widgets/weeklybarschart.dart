@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class WeeklyBarsChart extends StatelessWidget {
-  const WeeklyBarsChart({super.key});
+  final List<double> values;
+  final List<String> labels;
+
+  const WeeklyBarsChart({super.key, List<double>? values, List<String>? labels})
+    : values = values ?? const [0.95, 0.75, 0.85, 0.9, 0.8, 0.88, 0.92],
+      labels = labels ?? const ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
 
   @override
   Widget build(BuildContext context) {

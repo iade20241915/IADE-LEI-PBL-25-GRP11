@@ -8,7 +8,9 @@ import '../screens/sleep_time_screen.dart';
 import '../screens/water_intake_screen.dart';
 import '../screens/welcome_screen.dart';
 import '../screens/home_dashboard_screen.dart';
-import '../screens/mood_inquiry2_screen.dart';
+import '../screens/meals_screen.dart';
+import '../screens/physical_activity_screen.dart';
+import '../screens/habits_screen.dart';
 
 class AppRoutes {
   static const String welcome = '/';
@@ -18,7 +20,9 @@ class AppRoutes {
   static const String water = '/water';
   static const String sleep = '/sleep';
   static const String mood = '/mood';
-  static const String mood2 = '/mood2';
+  static const String meals = '/meals';
+  static const String phisical = '/phisical';
+  static const String habits = '/habits';
 
   static final Map<String, WidgetBuilder> routes = {
     welcome: (_) => const WelcomeScreen(),
@@ -28,7 +32,9 @@ class AppRoutes {
     water: (_) => const WaterIntakeScreen(),
     sleep: (_) => const SleepTimeScreen(),
     mood: (_) => const MoodInquiryScreen(),
-    mood2: (_) => const MoodInquiry2Screen(),
+    meals: (_) => const MealsScreen(),
+    phisical: (_) => const PhysicalActivityScreen(),
+    habits: (_) => const HabitsScreen(),
   };
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     // ponto único para lidar com rotas futuras (ex: parâmetros)
