@@ -174,7 +174,7 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
               child: Align(
                 alignment: Alignment.center,
                 child: _MoodGrid(
-                  selected: controller.selected,
+                  selected: controller.selectedLevel,
                   onSelect: controller.select,
                 ),
               ),
@@ -187,7 +187,7 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
                 width: 180,
                 child: PrimaryButton(
                   text: _showDetails ? 'Detalhes (aberto)' : 'Continuar',
-                  onPressed: controller.selected == null
+                  onPressed: controller.selectedLevel == null
                       ? null
                       : () {
                           if (_showDetails) return;
@@ -489,7 +489,7 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
   /// Verifica se pode gravar (pelo menos humor selecionado)
   bool _canSave() {
     final controller = context.read<MoodController>();
-    return controller.selected != null;
+    return controller.selectedLevel != null;
   }
 
   /// Grava os dados do humor
