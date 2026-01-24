@@ -1,7 +1,7 @@
 /// Modelo de dados para registro de atividade física
 class PhysicalActivity {
   final String id;
-  final String userId;
+  final String visitorId;
   final DateTime timestamp;
   final ActivityType activityType;
   final int durationMinutes;
@@ -16,7 +16,7 @@ class PhysicalActivity {
 
   PhysicalActivity({
     required this.id,
-    required this.userId,
+    required this.visitorId,
     required this.timestamp,
     required this.activityType,
     required this.durationMinutes,
@@ -50,7 +50,7 @@ class PhysicalActivity {
   /// Cria uma cópia com valores atualizados
   PhysicalActivity copyWith({
     String? id,
-    String? userId,
+    String? visitorId,
     DateTime? timestamp,
     ActivityType? activityType,
     int? durationMinutes,
@@ -63,7 +63,7 @@ class PhysicalActivity {
   }) {
     return PhysicalActivity(
       id: id ?? this.id,
-      userId: userId ?? this.userId,
+      visitorId: visitorId ?? this.visitorId,
       timestamp: timestamp ?? this.timestamp,
       activityType: activityType ?? this.activityType,
       durationMinutes: durationMinutes ?? this.durationMinutes,
@@ -80,7 +80,7 @@ class PhysicalActivity {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'user_id': userId,
+      'user_id': visitorId,
       'timestamp': timestamp.toIso8601String(),
       'activity_type': activityType.toString().split('.').last,
       'duration_minutes': durationMinutes,
@@ -95,7 +95,7 @@ class PhysicalActivity {
   factory PhysicalActivity.fromJson(Map<String, dynamic> json) {
     return PhysicalActivity(
       id: json['id'] as String,
-      userId: json['user_id'] as String,
+      visitorId: json['user_id'] as String,
       timestamp: DateTime.parse(json['timestamp'] as String),
       activityType: ActivityType.values.firstWhere(
         (e) => e.toString().split('.').last == json['activity_type'],

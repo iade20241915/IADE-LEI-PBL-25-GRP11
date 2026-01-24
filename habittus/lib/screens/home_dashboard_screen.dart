@@ -4,6 +4,7 @@ import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_drawer.dart';
 import '../widgets/weeklywaveschart.dart';
 import '../widgets/weeklybarschart.dart';
+import '../widgets/habittus_icons.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -63,81 +64,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _CardTitle(
-                    icon: Icons.accessibility_new,
+                    icon: HabittusIcons.emotion,
+                    iconColor: HabittusIcons.moodColor,
                     title: 'Estado de Espírito',
                     subtitle: 'Registos',
                   ),
                   const SizedBox(height: 10),
                   const _MoodGrid(),
-                  const SizedBox(height: 8),
-                  const Divider(height: 18),
-                  _RowTitle(
-                    icon: Icons.photo_camera_outlined,
-                    title: 'Fotos deste dia',
-                    subtitle: 'Imagens guardadas neste dia',
-                  ),
-                  const SizedBox(height: 10),
-                  const _PhotoRow(),
-                  const Divider(height: 18),
-                  _RowTitle(
-                    icon: Icons.edit_note,
-                    title: 'Notas deste dia',
-                    subtitle: 'As notas deste dia',
-                  ),
-                  const SizedBox(height: 10),
-                  _ActionTile(
-                    leading: Icons.edit_note,
-                    text: 'Date_Time',
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 12),
-                  _RowTitle(
-                    icon: Icons.mic_none,
-                    title: 'Notas de voz deste dia',
-                    subtitle: 'Nota de áudio deste dia',
-                  ),
-                  const SizedBox(height: 10),
-                  _ActionTile(
-                    leading: Icons.mic_none,
-                    text: 'Date_Time',
-                    onTap: () {},
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            _Card(
-              background: const Color(0xFFF3F5EA),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  _CardTitle(
-                    icon: Icons.bar_chart,
-                    title: 'Hidratação',
-                    subtitle: 'Histórico semanal',
-                  ),
-                  SizedBox(height: 12),
-                  WeeklyWavesChart(),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            _Card(
-              background: const Color(0xFFF3F5EA),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  _CardTitle(
-                    icon: Icons.bar_chart,
-                    title: 'Horas de Descanso',
-                    subtitle: 'Histórico semanal',
-                  ),
-                  SizedBox(height: 12),
-                  WeeklyBarsChart(),
                 ],
               ),
             ),
@@ -149,9 +82,48 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _CardTitle(
-                    icon: Icons.calendar_month_outlined,
-                    title: 'Calendário Mensutal',
+                  _CardTitle(
+                    icon: HabittusIcons.water,
+                    iconColor: HabittusIcons.waterColor,
+                    title: 'Hidratação',
+                    subtitle: 'Histórico semanal',
+                  ),
+                  const SizedBox(height: 12),
+                  const WeeklyWavesChart(),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            _Card(
+              background: const Color(0xFFF3F5EA),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _CardTitle(
+                    icon: HabittusIcons.sleep,
+                    iconColor: HabittusIcons.sleepColor,
+                    title: 'Horas de Descanso',
+                    subtitle: 'Histórico semanal',
+                  ),
+                  const SizedBox(height: 12),
+                  const WeeklyBarsChart(),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            _Card(
+              background: const Color(0xFFF3F5EA),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _CardTitle(
+                    icon: HabittusIcons.cycle,
+                    iconColor: HabittusIcons.cycleColor,
+                    title: 'Calendário Menstrual',
                     subtitle: 'Acompanha o teu ciclo e os teus registos',
                   ),
                   const SizedBox(height: 10),
@@ -175,14 +147,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               background: const Color(0xFFF3F5EA),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   _CardTitle(
-                    icon: Icons.local_florist_outlined,
+                    icon: HabittusIcons.fertile,
+                    iconColor: HabittusIcons.cycleColor,
                     title: 'Ciclo Atual',
                     subtitle: 'Dias até à próxima menstruação',
                   ),
-                  SizedBox(height: 10),
-                  _CycleGauge(daysLeft: 19),
+                  const SizedBox(height: 10),
+                  const _CycleGauge(daysLeft: 19),
                 ],
               ),
             ),
@@ -221,53 +194,32 @@ class _CardTitle extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final Color? iconColor;
 
   const _CardTitle({
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-            ],
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: (iconColor ?? HabittusIcons.primaryColor).withOpacity(0.15),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon, 
+            size: 20,
+            color: iconColor ?? HabittusIcons.primaryColor,
           ),
         ),
-      ],
-    );
-  }
-}
-
-class _RowTitle extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _RowTitle({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 20),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -283,46 +235,6 @@ class _RowTitle extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  final IconData leading;
-  final String text;
-  final VoidCallback onTap;
-
-  const _ActionTile({
-    required this.leading,
-    required this.text,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFDDECCF),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(leading, size: 18),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                text,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-            const Icon(Icons.chevron_right),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -367,66 +279,6 @@ class _MoodGrid extends StatelessWidget {
           child: Icon(icons[i], size: 20),
         );
       }),
-    );
-  }
-}
-
-/* ---------- PHOTOS ROW ---------- */
-
-class _PhotoRow extends StatelessWidget {
-  const _PhotoRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 92,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: 3,
-        separatorBuilder: (_, _) => const SizedBox(width: 12),
-        itemBuilder: (_, i) {
-          return Container(
-            width: 88,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFE6E6EC), Color(0xFFCFCFDA)],
-              ),
-            ),
-            child: Stack(
-              children: [
-                const Center(
-                  child: Icon(
-                    Icons.image_outlined,
-                    size: 34,
-                    color: Colors.white70,
-                  ),
-                ),
-                Positioned(
-                  left: 10,
-                  bottom: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(.25),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      'Time',
-                      style: TextStyle(color: Colors.white, fontSize: 11),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
     );
   }
 }

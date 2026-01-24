@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../models/physical_activity.dart';
+import '../services/location_service.dart';
 import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_card.dart';
 import '../widgets/primary_button.dart';
+import '../widgets/habittus_icons.dart';
 
 class AddActivityScreen extends StatefulWidget {
   final DateTime date;
@@ -25,6 +27,14 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
   final caloriesController = TextEditingController();
   final notesController = TextEditingController();
 
+  // Estado do GPS
+  bool _isCapturingGps = false;
+  bool _activityStarted = false;
+  GpsTrackPoint? _startLocation;
+  GpsTrackPoint? _endLocation;
+  DateTime? _activityStartTime;
+  final LocationService _locationService = LocationService.instance;
+
   bool get isEditing => widget.activityToEdit != null;
 
   @override
@@ -40,6 +50,8 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
       distanceController.text = activity.distanceKm?.toString() ?? '';
       caloriesController.text = activity.caloriesBurned?.toString() ?? '';
       notesController.text = activity.notes ?? '';
+      _startLocation = activity.startLocation;
+      _endLocation = activity.endLocation;
     } else {
       selectedType = ActivityType.running;
       selectedIntensity = ActivityIntensity.moderate;
@@ -80,6 +92,131 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
     }
   }
 
+  /// Inicia a atividade e captura localização GPS inicial
+  Future<void> _startActivity() async {
+    if (!selectedType.requiresGps) {
+      setState(() {
+        _activityStarted = true;
+        _activityStartTime = DateTime.now();
+      });
+      return;
+    }
+
+    setState(() => _isCapturingGps = true);
+
+    try {
+      final coordinate = await _locationService.getCurrentLocation();
+      
+      if (coordinate != null) {
+        setState(() {
+          _startLocation = GpsTrackPoint(
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+            altitude: coordinate.altitude,
+            sequence: 1,
+          );
+          _activityStarted = true;
+          _activityStartTime = DateTime.now();
+          _isCapturingGps = false;
+        });
+        _showSuccess('Atividade iniciada! Localização capturada.');
+      } else {
+        setState(() => _isCapturingGps = false);
+        _showGpsError();
+      }
+    } catch (e) {
+      setState(() => _isCapturingGps = false);
+      _showGpsError();
+    }
+  }
+
+  /// Termina a atividade e captura localização GPS final
+  Future<void> _endActivity() async {
+    if (!selectedType.requiresGps) {
+      _calculateDurationFromStartTime();
+      return;
+    }
+
+    setState(() => _isCapturingGps = true);
+
+    try {
+      final coordinate = await _locationService.getCurrentLocation();
+      
+      if (coordinate != null) {
+        setState(() {
+          _endLocation = GpsTrackPoint(
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+            altitude: coordinate.altitude,
+            sequence: 2,
+          );
+          _isCapturingGps = false;
+        });
+
+        // Calcular duração automaticamente
+        _calculateDurationFromStartTime();
+
+        // Calcular distância se tiver ambos os pontos
+        if (_startLocation != null) {
+          final distance = _locationService.calculateDistanceKm(
+            GpsCoordinate(
+              latitude: _startLocation!.latitude,
+              longitude: _startLocation!.longitude,
+            ),
+            GpsCoordinate(
+              latitude: _endLocation!.latitude,
+              longitude: _endLocation!.longitude,
+            ),
+          );
+          distanceController.text = distance.toStringAsFixed(2);
+        }
+
+        _showSuccess('Atividade terminada! Localização capturada.');
+      } else {
+        setState(() => _isCapturingGps = false);
+        _showGpsError();
+      }
+    } catch (e) {
+      setState(() => _isCapturingGps = false);
+      _showGpsError();
+    }
+  }
+
+  void _calculateDurationFromStartTime() {
+    if (_activityStartTime != null) {
+      final duration = DateTime.now().difference(_activityStartTime!);
+      durationController.text = duration.inMinutes.toString();
+    }
+  }
+
+  void _showGpsError() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('GPS Indisponível'),
+        content: const Text(
+          'Não foi possível obter a localização. Verifique se o GPS está ativo e se concedeu permissões de localização.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF2F5D2F),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   void _save() {
     // Validação básica
     final duration = int.tryParse(durationController.text);
@@ -117,6 +254,8 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
       distanceKm: distance,
       caloriesBurned: calories,
       notes: notesController.text.isEmpty ? null : notesController.text,
+      startLocation: _startLocation,
+      endLocation: _endLocation,
     );
 
     Navigator.pop(context, activity);
@@ -134,6 +273,8 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final showGpsControls = selectedType.requiresGps && !isEditing;
+
     return Scaffold(
       appBar: const HabittusAppBar(showBack: true),
       backgroundColor: const Color(0xFFF6F8F0),
@@ -154,6 +295,20 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
 
             const SizedBox(height: 20),
 
+            // Controles GPS para atividades com tracking
+            if (showGpsControls) ...[
+              _GpsTrackingCard(
+                activityType: selectedType,
+                isCapturing: _isCapturingGps,
+                activityStarted: _activityStarted,
+                startLocation: _startLocation,
+                endLocation: _endLocation,
+                onStartActivity: _startActivity,
+                onEndActivity: _endActivity,
+              ),
+              const SizedBox(height: 14),
+            ],
+
             // Seletor de tipo de atividade
             HabittusCard(
               title: 'Tipo de atividade',
@@ -162,7 +317,14 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
                 children: [
                   _ActivityTypeSelector(
                     selectedType: selectedType,
-                    onSelect: (type) => setState(() => selectedType = type),
+                    onSelect: (type) => setState(() {
+                      selectedType = type;
+                      // Reset GPS data quando muda de tipo
+                      if (!type.requiresGps) {
+                        _startLocation = null;
+                        _endLocation = null;
+                      }
+                    }),
                   ),
                   const SizedBox(height: 12),
 
@@ -175,7 +337,13 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
                             _ActivityTypeDialog(selectedType: selectedType),
                       );
                       if (selected != null) {
-                        setState(() => selectedType = selected);
+                        setState(() {
+                          selectedType = selected;
+                          if (!selected.requiresGps) {
+                            _startLocation = null;
+                            _endLocation = null;
+                          }
+                        });
                       }
                     },
                     child: Container(
@@ -190,7 +358,7 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.search, size: 18),
+                          Icon(HabittusIcons.activity, size: 18),
                           SizedBox(width: 8),
                           Text(
                             'Ver todas as atividades',
@@ -216,7 +384,7 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
                   // Hora
                   _InfoField(
                     label: 'Hora',
-                    icon: Icons.access_time,
+                    icon: HabittusIcons.time,
                     child: InkWell(
                       onTap: _selectTime,
                       borderRadius: BorderRadius.circular(12),
@@ -240,7 +408,7 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
                                 ),
                               ),
                             ),
-                            const Icon(Icons.chevron_right),
+                            const Icon(HabittusIcons.chevronRight),
                           ],
                         ),
                       ),
@@ -251,8 +419,8 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
 
                   // Duração
                   _InfoField(
-                    label: 'Duração (minutos) *',
-                    icon: Icons.timer,
+                    label: 'Duração (minutos)',
+                    icon: HabittusIcons.time,
                     child: TextField(
                       controller: durationController,
                       keyboardType: TextInputType.number,
@@ -277,22 +445,22 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
                   // Intensidade
                   _InfoField(
                     label: 'Intensidade',
-                    icon: Icons.speed,
+                    icon: HabittusIcons.activity,
                     child: Row(
                       children: ActivityIntensity.values.map((intensity) {
                         final isSelected = selectedIntensity == intensity;
                         return Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: EdgeInsets.only(
+                              right: intensity != ActivityIntensity.high ? 8 : 0,
+                            ),
                             child: InkWell(
-                              onTap: () => setState(() {
-                                selectedIntensity = intensity;
-                              }),
+                              onTap: () =>
+                                  setState(() => selectedIntensity = intensity),
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? const Color(0xFF2F5D2F)
@@ -305,7 +473,7 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
                                       intensity.emoji,
                                       style: const TextStyle(fontSize: 20),
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 2),
                                     Text(
                                       intensity.label,
                                       style: TextStyle(
@@ -331,14 +499,13 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
                   // Distância (opcional)
                   _InfoField(
                     label: 'Distância (km) - opcional',
-                    icon: Icons.straighten,
+                    icon: HabittusIcons.location,
                     child: TextField(
                       controller: distanceController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
-                        hintText: 'Ex: 5.2',
+                        hintText: 'Ex: 5.5',
                         filled: true,
                         fillColor: const Color(0xFFF6F8F0),
                         border: OutlineInputBorder(
@@ -357,13 +524,13 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
 
                   // Calorias (opcional)
                   _InfoField(
-                    label: 'Calorias - opcional',
-                    icon: Icons.local_fire_department,
+                    label: 'Calorias queimadas - opcional',
+                    icon: HabittusIcons.fire,
                     child: TextField(
                       controller: caloriesController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        hintText: 'Ex: 320',
+                        hintText: 'Ex: 250',
                         filled: true,
                         fillColor: const Color(0xFFF6F8F0),
                         border: OutlineInputBorder(
@@ -383,7 +550,7 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
                   // Notas (opcional)
                   _InfoField(
                     label: 'Notas - opcional',
-                    icon: Icons.notes,
+                    icon: HabittusIcons.notes,
                     child: TextField(
                       controller: notesController,
                       maxLines: 3,
@@ -407,7 +574,7 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
 
             // Botão salvar
             PrimaryButton(
-              text: isEditing ? 'Atualizar' : 'Adicionar',
+              text: isEditing ? 'Atualizar' : 'Guardar Atividade',
               onPressed: _save,
             ),
 
@@ -425,6 +592,218 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
             const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Card para controles de tracking GPS
+class _GpsTrackingCard extends StatelessWidget {
+  final ActivityType activityType;
+  final bool isCapturing;
+  final bool activityStarted;
+  final GpsTrackPoint? startLocation;
+  final GpsTrackPoint? endLocation;
+  final VoidCallback onStartActivity;
+  final VoidCallback onEndActivity;
+
+  const _GpsTrackingCard({
+    required this.activityType,
+    required this.isCapturing,
+    required this.activityStarted,
+    this.startLocation,
+    this.endLocation,
+    required this.onStartActivity,
+    required this.onEndActivity,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2F5D2F).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2F5D2F).withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2F5D2F),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  HabittusIcons.location,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tracking GPS - ${activityType.label}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const Text(
+                      'Captura localização no início e fim',
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Status das localizações
+          Row(
+            children: [
+              _GpsStatusChip(
+                label: 'Início',
+                captured: startLocation != null,
+              ),
+              const SizedBox(width: 8),
+              _GpsStatusChip(
+                label: 'Fim',
+                captured: endLocation != null,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Botões de controle
+          if (isCapturing)
+            const Center(
+              child: Column(
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation(Color(0xFF2F5D2F)),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'A obter localização...',
+                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ],
+              ),
+            )
+          else if (!activityStarted)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onStartActivity,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2F5D2F),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.play_arrow),
+                label: const Text(
+                  'Iniciar Atividade',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            )
+          else if (endLocation == null)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onEndActivity,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.stop),
+                label: const Text(
+                  'Terminar Atividade',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2F5D2F).withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle, color: Color(0xFF2F5D2F)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Tracking completo!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF2F5D2F),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Chip de status GPS
+class _GpsStatusChip extends StatelessWidget {
+  final String label;
+  final bool captured;
+
+  const _GpsStatusChip({
+    required this.label,
+    required this.captured,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: captured ? const Color(0xFF2F5D2F) : Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            captured ? Icons.check : Icons.circle_outlined,
+            size: 16,
+            color: captured ? Colors.white : Colors.black54,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: captured ? Colors.white : Colors.black54,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -520,6 +899,14 @@ class _ActivityTypeSelector extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
+                if (type.requiresGps) ...[
+                  const SizedBox(height: 2),
+                  Icon(
+                    HabittusIcons.location,
+                    size: 12,
+                    color: isSelected ? Colors.white70 : Colors.black38,
+                  ),
+                ],
               ],
             ),
           ),
@@ -560,7 +947,7 @@ class _ActivityTypeDialog extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(HabittusIcons.close),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -588,18 +975,33 @@ class _ActivityTypeDialog extends StatelessWidget {
                           Text(type.icon, style: const TextStyle(fontSize: 24)),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Text(
-                              type.label,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: isSelected
-                                    ? Colors.white
-                                    : Colors.black87,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  type.label,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.black87,
+                                  ),
+                                ),
+                                if (type.requiresGps)
+                                  Text(
+                                    'Com GPS',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: isSelected
+                                          ? Colors.white70
+                                          : Colors.black38,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                           if (isSelected)
-                            const Icon(Icons.check_circle, color: Colors.white),
+                            const Icon(HabittusIcons.check, color: Colors.white),
                         ],
                       ),
                     ),

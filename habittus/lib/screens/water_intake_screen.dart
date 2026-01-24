@@ -7,6 +7,7 @@ import '../widgets/date_pills.dart';
 import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_card.dart';
 import '../widgets/habittus_drawer.dart';
+import '../widgets/habittus_icons.dart';
 
 class WaterIntakeScreen extends StatefulWidget {
   const WaterIntakeScreen({super.key});
@@ -119,7 +120,7 @@ class _WaterIntakeScreenState extends State<WaterIntakeScreen> {
             const SizedBox(height: 16),
 
             HabittusCard(
-              title: 'HydrateLog',
+              title: 'Hidratação',
               subtitle: 'Contador de água',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -215,23 +216,30 @@ class _CupGrid extends StatelessWidget {
                   padding: EdgeInsets.only(right: c == cols - 1 ? 0 : 8),
                   child: InkWell(
                     onTap: () => onTap(index),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      height: 44,
+                      height: 52,
                       decoration: BoxDecoration(
                         color: isFilled
-                            ? const Color(0xFFBFDFA8)
+                            ? HabittusIcons.waterColor.withOpacity(0.2)
                             : const Color(0xFFEAF3E3),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.green.shade200),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isFilled
+                              ? HabittusIcons.waterColor
+                              : const Color(0xFFD9E1D0),
+                          width: 2,
+                        ),
                       ),
                       child: Center(
                         child: Icon(
-                          Icons.add,
-                          size: 18,
+                          isFilled
+                              ? HabittusIcons.waterFilled
+                              : HabittusIcons.water,
+                          size: 24,
                           color: isFilled
-                              ? Colors.green.shade900
-                              : Colors.green.shade400,
+                              ? HabittusIcons.waterColor
+                              : Colors.grey.shade400,
                         ),
                       ),
                     ),
@@ -334,28 +342,28 @@ class _WaterQuickAddFabState extends State<WaterQuickAddFab>
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         _QuickPill(
-                          icon: Icons.local_drink_outlined,
+                          icon: HabittusIcons.glass,
                           label: '200ml',
                           onTap: () => _tapAdd(200, WaterAddSource.manual),
                         ),
                         const SizedBox(height: 6),
                         _QuickPill(
-                          icon: Icons.local_drink_outlined,
+                          icon: HabittusIcons.glass,
                           label: '300ml',
                           onTap: () => _tapAdd(300, WaterAddSource.manual),
                         ),
                         const SizedBox(height: 6),
                         _QuickPill(
-                          icon: Icons.local_drink_outlined,
+                          icon: HabittusIcons.bottle,
                           label: '500ml',
                           onTap: () => _tapAdd(500, WaterAddSource.manual),
                         ),
-                        const SizedBox(height: 6),
+                        /*const SizedBox(height: 6),
                         _QuickPill(
-                          icon: Icons.water_drop_outlined,
+                          icon: HabittusIcons.water,
                           label: '500ml',
                           onTap: () => _tapAdd(500, WaterAddSource.bottle),
-                        ),
+                        ),*/
                       ],
                     ),
                   ),
@@ -384,7 +392,7 @@ class _WaterQuickAddFabState extends State<WaterQuickAddFab>
         child: AnimatedRotation(
           turns: _open ? 0.125 : 0,
           duration: const Duration(milliseconds: 160),
-          child: const Icon(Icons.add, color: Colors.white),
+          child: const Icon(HabittusIcons.add, color: Colors.white),
         ),
       ),
     );
@@ -405,7 +413,7 @@ class _QuickPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFDFF0CC),
+      color: HabittusIcons.waterColor.withOpacity(0.15),
       borderRadius: BorderRadius.circular(999),
       child: InkWell(
         onTap: onTap,
@@ -415,12 +423,20 @@ class _QuickPill extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 18, color: Colors.green.shade900),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: HabittusIcons.waterColor.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 18, color: HabittusIcons.waterColor),
+              ),
               const SizedBox(width: 10),
               Text(
                 label,
                 style: TextStyle(
-                  color: Colors.green.shade900,
+                  color: HabittusIcons.waterColor,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),

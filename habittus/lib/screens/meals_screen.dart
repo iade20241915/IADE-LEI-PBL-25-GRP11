@@ -6,6 +6,7 @@ import '../widgets/habittus_card.dart';
 import '../widgets/weeklybarschart.dart';
 import '../widgets/date_pills.dart';
 import '../widgets/food_detail_dialog.dart';
+import '../widgets/habittus_icons.dart';
 import 'add_meal_screen.dart';
 
 class MealsScreen extends StatefulWidget {
@@ -61,11 +62,11 @@ class _MealsScreenState extends State<MealsScreen> {
   @override
   Widget build(BuildContext context) {
     // Mock (mantém a tua versão)
-    final meals = const [
-      _MealRow('Arroz', 500, Icons.rice_bowl_outlined),
-      _MealRow('Massa', 400, Icons.ramen_dining_outlined),
-      _MealRow('Salada', 350, Icons.eco_outlined),
-      _MealRow('Bacalhau à brás', 400, Icons.set_meal_outlined),
+    final meals = [
+      _MealRow('Arroz', 500, HabittusIcons.rice),
+      _MealRow('Massa', 400, HabittusIcons.meal),
+      _MealRow('Salada', 350, HabittusIcons.vegetable),
+      _MealRow('Bacalhau à brás', 400, HabittusIcons.dinner),
     ];
 
     // 0..1 (mock)
@@ -79,7 +80,7 @@ class _MealsScreenState extends State<MealsScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddMeal,
         backgroundColor: const Color(0xFF2F5D2F),
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(HabittusIcons.add, color: Colors.white),
       ),
       body: SafeArea(
         child: ListView(
@@ -199,7 +200,7 @@ class _MealTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: const Color(0xFFE4EAD8),
@@ -207,20 +208,43 @@ class _MealTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFF244A24)),
-            const SizedBox(width: 10),
+            // Ícone colorido com fundo
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: HabittusIcons.foodColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: HabittusIcons.foodColor, size: 24),
+            ),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
               ),
             ),
-            Text(
-              '${kcal}kcal',
-              style: const TextStyle(fontWeight: FontWeight.w800),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: HabittusIcons.foodColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${kcal}kcal',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: HabittusIcons.foodColor,
+                  fontSize: 13,
+                ),
+              ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.chevron_right),
+            Icon(HabittusIcons.chevronRight, color: Colors.black54),
           ],
         ),
       ),

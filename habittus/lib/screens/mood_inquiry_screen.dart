@@ -8,6 +8,7 @@ import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_card.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/habittus_drawer.dart';
+import '../widgets/habittus_icons.dart';
 
 class MoodInquiryScreen extends StatefulWidget {
   /// ✅ Define se o utilizador é do sexo feminino.
@@ -220,21 +221,22 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionCard(
-          icon: Icons.bed_outlined,
+          icon: HabittusIcons.bed,
+          iconColor: HabittusIcons.sleepColor,
           title: 'Qualidade do sono',
           subtitle: 'Como avalias a qualidade do teu sono na última noite?',
           child: _SingleChoiceGrid(
             items: const [
               _Choice(
                 id: 'Muito Boa',
-                icon: Icons.sentiment_very_satisfied_outlined,
+                icon: HabittusIcons.moodVeryGood,
               ),
-              _Choice(id: 'Boa', icon: Icons.sentiment_satisfied_outlined),
-              _Choice(id: 'OK', icon: Icons.sentiment_neutral_outlined),
-              _Choice(id: 'Má', icon: Icons.sentiment_dissatisfied_outlined),
+              _Choice(id: 'Boa', icon: HabittusIcons.moodGood),
+              _Choice(id: 'OK', icon: HabittusIcons.moodNeutral),
+              _Choice(id: 'Má', icon: HabittusIcons.moodBad),
               _Choice(
                 id: 'Muito Má',
-                icon: Icons.sentiment_very_dissatisfied_outlined,
+                icon: HabittusIcons.moodVeryBad,
               ),
             ],
             selectedId: sleepQuality,
@@ -244,22 +246,23 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
         const SizedBox(height: 12),
 
         _SectionCard(
-          icon: Icons.favorite_border,
+          icon: HabittusIcons.heart,
+          iconColor: HabittusIcons.moodColor,
           title: 'Emoções',
           subtitle: 'Quais destas emoções sentiste ao longo do dia?',
           child: _MultiChoiceGrid(
             items: const [
-              _Choice(id: 'Feliz', icon: Icons.sentiment_satisfied_outlined),
-              _Choice(id: 'Energia', icon: Icons.bolt_outlined),
-              _Choice(id: 'Grato', icon: Icons.favorite_border),
-              _Choice(id: 'Cansado', icon: Icons.bed_outlined),
+              _Choice(id: 'Feliz', icon: HabittusIcons.moodGood),
+              _Choice(id: 'Energia', icon: HabittusIcons.calories),
+              _Choice(id: 'Grato', icon: HabittusIcons.heart),
+              _Choice(id: 'Cansado', icon: HabittusIcons.bed),
               _Choice(
                 id: 'Triste',
-                icon: Icons.sentiment_dissatisfied_outlined,
+                icon: HabittusIcons.moodBad,
               ),
-              _Choice(id: 'Aborrecido', icon: Icons.sentiment_neutral_outlined),
-              _Choice(id: 'Ansioso', icon: Icons.psychology_outlined),
-              _Choice(id: 'Calmo', icon: Icons.spa_outlined),
+              _Choice(id: 'Aborrecido', icon: HabittusIcons.moodNeutral),
+              _Choice(id: 'Ansioso', icon: HabittusIcons.psychology),
+              _Choice(id: 'Calmo', icon: HabittusIcons.spa),
             ],
             selected: emotions,
             onToggle: (id) => setState(() {
@@ -274,22 +277,23 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
         const SizedBox(height: 12),
 
         _SectionCard(
-          icon: Icons.health_and_safety_outlined,
+          icon: HabittusIcons.health,
+          iconColor: HabittusIcons.activityColor,
           title: 'Saúde',
           subtitle: 'O que descreve melhor o teu estado de saúde hoje?',
           child: _MultiChoiceGrid(
             items: const [
-              _Choice(id: 'Dores', icon: Icons.healing_outlined),
-              _Choice(id: 'Exercício', icon: Icons.fitness_center_outlined),
-              _Choice(id: 'Doença', icon: Icons.sick_outlined),
-              _Choice(id: 'Relaxado', icon: Icons.self_improvement_outlined),
-              _Choice(id: 'Stress', icon: Icons.psychology_alt_outlined),
-              _Choice(id: 'Enxaqueca', icon: Icons.bolt_outlined),
+              _Choice(id: 'Dores', icon: HabittusIcons.pain),
+              _Choice(id: 'Exercício', icon: HabittusIcons.activity),
+              _Choice(id: 'Doença', icon: HabittusIcons.sick),
+              _Choice(id: 'Relaxado', icon: HabittusIcons.calm),
+              _Choice(id: 'Stress', icon: HabittusIcons.stress),
+              _Choice(id: 'Enxaqueca', icon: HabittusIcons.calories),
               _Choice(
                 id: 'Alongamentos',
-                icon: Icons.accessibility_new_outlined,
+                icon: HabittusIcons.activity,
               ),
-              _Choice(id: 'Bem', icon: Icons.check_circle_outline),
+              _Choice(id: 'Bem', icon: HabittusIcons.check),
             ],
             selected: health,
             onToggle: (id) => setState(() {
@@ -309,7 +313,8 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
           const SizedBox(height: 12),
 
           _SectionCard(
-            icon: Icons.medication_outlined,
+            icon: HabittusIcons.medication,
+            iconColor: HabittusIcons.cycleColor,
             title: 'Contraceção',
             subtitle: 'Marca se tomaste a pílula hoje.',
             child: _YesNoToggle(
@@ -322,7 +327,8 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
           const SizedBox(height: 12),
 
           _SectionCard(
-            icon: Icons.favorite_outline,
+            icon: HabittusIcons.heart,
+            iconColor: HabittusIcons.cycleColor,
             title: 'Atividade sexual',
             subtitle: 'Regista se tiveste relações sexuais hoje.',
             child: Column(
@@ -357,7 +363,8 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
           const SizedBox(height: 12),
 
           _SectionCard(
-            icon: Icons.spa_outlined,
+            icon: HabittusIcons.spa,
+            iconColor: HabittusIcons.cycleColor,
             title: 'Sintomas da menstruação',
             subtitle: 'Que alterações sentiste durante a menstruação?',
             child: _MenstruationSymptomsGrid(
@@ -375,7 +382,8 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
           const SizedBox(height: 12),
 
           _SectionCard(
-            icon: Icons.water_drop_outlined,
+            icon: HabittusIcons.water,
+            iconColor: HabittusIcons.cycleColor,
             title: 'Fluxo menstrual',
             subtitle: 'Como classificas o teu fluxo?',
             child: _MenstrualFlowGrid(
@@ -388,19 +396,20 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
         const SizedBox(height: 12),
 
         _SectionCard(
-          icon: Icons.restaurant_outlined,
+          icon: HabittusIcons.meal,
+          iconColor: HabittusIcons.foodColor,
           title: 'Alimentação',
           subtitle: 'Como foi a tua alimentação hoje?',
           child: _MultiChoiceGrid(
             items: const [
-              _Choice(id: 'Equilibrada', icon: Icons.balance_outlined),
-              _Choice(id: 'Pouca água', icon: Icons.water_drop_outlined),
-              _Choice(id: 'Excessos', icon: Icons.fastfood_outlined),
-              _Choice(id: 'Saudável', icon: Icons.eco_outlined),
-              _Choice(id: 'Doces', icon: Icons.cake_outlined),
-              _Choice(id: 'Álcool', icon: Icons.wine_bar_outlined),
-              _Choice(id: 'Fruta', icon: Icons.apple_outlined),
-              _Choice(id: 'Vegetais', icon: Icons.grass_outlined),
+              _Choice(id: 'Equilibrada', icon: HabittusIcons.health),
+              _Choice(id: 'Pouca água', icon: HabittusIcons.water),
+              _Choice(id: 'Excessos', icon: HabittusIcons.food),
+              _Choice(id: 'Saudável', icon: HabittusIcons.vegetable),
+              _Choice(id: 'Doces', icon: HabittusIcons.cake),
+              _Choice(id: 'Álcool', icon: HabittusIcons.alcohol),
+              _Choice(id: 'Fruta', icon: HabittusIcons.fruit),
+              _Choice(id: 'Vegetais', icon: HabittusIcons.vegetable),
             ],
             selected: food,
             onToggle: (id) => setState(() {
@@ -415,19 +424,20 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
         const SizedBox(height: 12),
 
         _SectionCard(
-          icon: Icons.wb_sunny_outlined,
+          icon: HabittusIcons.sunny,
+          iconColor: const Color(0xFFFF9800),
           title: 'Clima',
           subtitle: 'Como estava o tempo onde estiveste durante o dia?',
           child: _MultiChoiceGrid(
             items: const [
-              _Choice(id: 'Sol', icon: Icons.wb_sunny_outlined),
-              _Choice(id: 'Nublado', icon: Icons.cloud_outlined),
-              _Choice(id: 'Chuva', icon: Icons.umbrella_outlined),
-              _Choice(id: 'Neve', icon: Icons.ac_unit_outlined),
-              _Choice(id: 'Calor', icon: Icons.local_fire_department_outlined),
-              _Choice(id: 'Tempest.', icon: Icons.thunderstorm_outlined),
-              _Choice(id: 'Vento', icon: Icons.air_outlined),
-              _Choice(id: 'Frio', icon: Icons.severe_cold_outlined),
+              _Choice(id: 'Sol', icon: HabittusIcons.sunny),
+              _Choice(id: 'Nublado', icon: HabittusIcons.cloudy),
+              _Choice(id: 'Chuva', icon: HabittusIcons.rainy),
+              _Choice(id: 'Neve', icon: HabittusIcons.snowy),
+              _Choice(id: 'Calor', icon: HabittusIcons.hot),
+              _Choice(id: 'Tempest.', icon: HabittusIcons.storm),
+              _Choice(id: 'Vento', icon: HabittusIcons.windy),
+              _Choice(id: 'Frio', icon: HabittusIcons.cold),
             ],
             selected: weather,
             onToggle: (id) => setState(() {
@@ -442,7 +452,8 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
         const SizedBox(height: 12),
 
         _SectionCard(
-          icon: Icons.edit_note_outlined,
+          icon: HabittusIcons.notes,
+          iconColor: const Color(0xFF607D8B),
           title: 'Notas',
           subtitle: 'Queres registar algum detalhe?',
           child: TextField(
@@ -459,7 +470,75 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
             ),
           ),
         ),
+
+        // Botão Gravar
+        const SizedBox(height: 24),
+        Center(
+          child: SizedBox(
+            width: 200,
+            child: PrimaryButton(
+              text: 'Gravar',
+              onPressed: _canSave() ? _saveData : null,
+            ),
+          ),
+        ),
       ],
+    );
+  }
+
+  /// Verifica se pode gravar (pelo menos humor selecionado)
+  bool _canSave() {
+    final controller = context.read<MoodController>();
+    return controller.selected != null;
+  }
+
+  /// Grava os dados do humor
+  Future<void> _saveData() async {
+    final controller = context.read<MoodController>();
+    
+    // Aqui podes salvar todos os dados
+    // Por agora, apenas mostra feedback
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(HabittusIcons.check, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Humor do dia ${d.day}/${d.month} gravado com sucesso!',
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF2F5D2F),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+
+    // Limpar formulário após gravar (opcional)
+    setState(() {
+      _showDetails = false;
+      sleepQuality = null;
+      emotions.clear();
+      health.clear();
+      food.clear();
+      weather.clear();
+      notesCtrl.clear();
+      tookPillToday = null;
+      hadSexToday = null;
+      usedProtection = null;
+      menstruationSymptoms.clear();
+      menstrualFlow = null;
+    });
+
+    // Scroll para o topo
+    _scrollCtrl.animateTo(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
     );
   }
 }
@@ -478,12 +557,12 @@ class _MoodGrid extends StatelessWidget {
       _MoodItem(
         'Péssimo',
         MoodLevel.veryBad,
-        Icons.sentiment_very_dissatisfied,
+        HabittusIcons.moodVeryBad,
       ),
-      _MoodItem('Mau', MoodLevel.bad, Icons.sentiment_dissatisfied),
-      _MoodItem('Ok', MoodLevel.neutral, Icons.sentiment_neutral),
-      _MoodItem('Bom', MoodLevel.good, Icons.sentiment_satisfied),
-      _MoodItem('Ótimo', MoodLevel.veryGood, Icons.sentiment_very_satisfied),
+      _MoodItem('Mau', MoodLevel.bad, HabittusIcons.moodBad),
+      _MoodItem('Ok', MoodLevel.neutral, HabittusIcons.moodNeutral),
+      _MoodItem('Bom', MoodLevel.good, HabittusIcons.moodGood),
+      _MoodItem('Ótimo', MoodLevel.veryGood, HabittusIcons.moodVeryGood),
     ];
 
     return LayoutBuilder(
@@ -529,7 +608,7 @@ class _MoodGrid extends StatelessWidget {
                     if (isSelected) ...[
                       const SizedBox(width: 6),
                       Icon(
-                        Icons.check_circle,
+                        HabittusIcons.check,
                         size: 16,
                         color: Colors.green.shade700,
                       ),
@@ -581,16 +660,19 @@ class _SectionCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final Widget child;
+  final Color? iconColor;
 
   const _SectionCard({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.child,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color = iconColor ?? HabittusIcons.primaryColor;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -604,15 +686,15 @@ class _SectionCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE4EAD8),
-                  shape: BoxShape.circle,
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: const Color(0xFF244A24)),
+                child: Icon(icon, color: color, size: 24),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -727,31 +809,49 @@ class _ChoiceButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 160),
-      width: 92,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFFE4EAD8) : const Color(0xFFF6F8F0),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: selected ? const Color(0xFF7FA57F) : const Color(0xFFD9E1D0),
-          width: 2,
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        width: 96,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFE4EAD8) : const Color(0xFFF6F8F0),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? HabittusIcons.primaryColor : const Color(0xFFD9E1D0),
+            width: 2,
+          ),
         ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: onTap,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: const Color(0xFF244A24)),
-            const SizedBox(height: 6),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: selected 
+                    ? HabittusIcons.primaryColor.withOpacity(0.2)
+                    : const Color(0xFFE4EAD8),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon, 
+                color: selected ? HabittusIcons.primaryColor : const Color(0xFF244A24),
+                size: 22,
+              ),
+            ),
+            const SizedBox(height: 8),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                color: selected ? HabittusIcons.primaryColor : Colors.black87,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -860,16 +960,16 @@ class _MenstruationSymptomsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const items = [
-      _Choice(id: 'Dor lombar', icon: Icons.back_hand_outlined),
-      _Choice(id: 'Barriga inchada', icon: Icons.bubble_chart_outlined),
-      _Choice(id: 'Aumento do apetite', icon: Icons.restaurant_outlined),
-      _Choice(id: 'Dor de cabeça', icon: Icons.psychology_outlined),
-      _Choice(id: 'Tonturas', icon: Icons.sync_alt_outlined),
-      _Choice(id: 'Enjoos', icon: Icons.sick_outlined),
-      _Choice(id: 'Borbulhas', icon: Icons.blur_on_outlined),
-      _Choice(id: 'Cólicas', icon: Icons.airline_seat_recline_normal_outlined),
-      _Choice(id: 'Seios sensíveis', icon: Icons.favorite_border),
-      _Choice(id: 'Sangramento', icon: Icons.water_drop_outlined),
+      _Choice(id: 'Dor lombar', icon: HabittusIcons.pain),
+      _Choice(id: 'Barriga inchada', icon: HabittusIcons.bloating),
+      _Choice(id: 'Aumento do apetite', icon: HabittusIcons.meal),
+      _Choice(id: 'Dor de cabeça', icon: HabittusIcons.psychology),
+      _Choice(id: 'Tonturas', icon: HabittusIcons.moodSwing),
+      _Choice(id: 'Enjoos', icon: HabittusIcons.sick),
+      _Choice(id: 'Borbulhas', icon: HabittusIcons.headache),
+      _Choice(id: 'Cólicas', icon: HabittusIcons.cramps),
+      _Choice(id: 'Seios sensíveis', icon: HabittusIcons.heart),
+      _Choice(id: 'Sangramento', icon: HabittusIcons.water),
     ];
 
     return Wrap(
@@ -898,12 +998,12 @@ class _MenstrualFlowGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const items = [
-      _Choice(id: 'Spots', icon: Icons.water_drop_outlined),
-      _Choice(id: 'Muito leve', icon: Icons.water_drop_outlined),
-      _Choice(id: 'Leve', icon: Icons.water_drop_outlined),
-      _Choice(id: 'Moderado', icon: Icons.water_drop_outlined),
-      _Choice(id: 'Intenso', icon: Icons.water_drop_outlined),
-      _Choice(id: 'Muito intenso', icon: Icons.water_drop_outlined),
+      _Choice(id: 'Spots', icon: HabittusIcons.water),
+      _Choice(id: 'Muito leve', icon: HabittusIcons.water),
+      _Choice(id: 'Leve', icon: HabittusIcons.water),
+      _Choice(id: 'Moderado', icon: HabittusIcons.water),
+      _Choice(id: 'Intenso', icon: HabittusIcons.water),
+      _Choice(id: 'Muito intenso', icon: HabittusIcons.water),
     ];
 
     return Wrap(

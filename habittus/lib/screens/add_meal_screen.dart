@@ -5,6 +5,7 @@ import '../widgets/habittus_drawer.dart';
 import '../widgets/habittus_card.dart';
 import '../widgets/date_pills.dart';
 import '../widgets/food_detail_dialog.dart';
+import '../widgets/habittus_icons.dart';
 
 enum MealType { breakfast, lunch, snack, dinner }
 
@@ -25,13 +26,13 @@ extension MealTypeX on MealType {
   IconData get icon {
     switch (this) {
       case MealType.breakfast:
-        return Icons.free_breakfast_outlined;
+        return HabittusIcons.breakfast;
       case MealType.lunch:
-        return Icons.lunch_dining_outlined;
+        return HabittusIcons.lunch;
       case MealType.snack:
-        return Icons.cookie_outlined;
+        return HabittusIcons.snack;
       case MealType.dinner:
-        return Icons.restaurant_outlined;
+        return HabittusIcons.dinner;
     }
   }
 }
@@ -285,7 +286,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
                     alignment: Alignment.centerRight,
                     child: IconButton(
                       onPressed: () {},
-                      icon: const Icon(Icons.more_vert),
+                      icon: const Icon(HabittusIcons.more),
                     ),
                   ),
 
@@ -362,7 +363,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
                     alignment: Alignment.centerRight,
                     child: IconButton(
                       onPressed: selected.isEmpty ? null : _openEditEntries,
-                      icon: const Icon(Icons.edit_outlined),
+                      icon: const Icon(HabittusIcons.edit),
                     ),
                   ),
 
@@ -499,7 +500,7 @@ class _FoodAutocompletePill extends StatelessWidget {
                     color: Color(0xFFE4EAD8),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.close, size: 16),
+                  child: const Icon(HabittusIcons.close, size: 16),
                 ),
               ),
             ],
@@ -535,7 +536,7 @@ class _FoodAutocompletePill extends StatelessWidget {
                   itemBuilder: (context, i) {
                     if (i == opts.length) {
                       return ListTile(
-                        leading: const Icon(Icons.add_circle_outline),
+                        leading: const Icon(HabittusIcons.add),
                         title: const Text('Registar novo alimento'),
                         onTap: onRegisterNew,
                       );
@@ -543,7 +544,7 @@ class _FoodAutocompletePill extends StatelessWidget {
                     final opt = opts[i];
                     return ListTile(
                       title: Text(opt.name),
-                      trailing: const Icon(Icons.chevron_right),
+                      trailing: const Icon(HabittusIcons.chevronRight),
                       onTap: () => onSelectedOpt(opt),
                     );
                   },
@@ -755,7 +756,7 @@ class _SheetShell extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(HabittusIcons.close),
                   ),
                 ],
               ),
@@ -890,7 +891,7 @@ class _InputPill extends StatelessWidget {
                 color: Color(0xFFE4EAD8),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.close, size: 16),
+              child: const Icon(HabittusIcons.close, size: 16),
             ),
           ),
         ],
@@ -921,27 +922,35 @@ class _MealTypeRow extends StatelessWidget {
               child: Column(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 52,
+                    height: 52,
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFF2F5D2F)
+                          ? HabittusIcons.foodColor.withOpacity(0.2)
                           : const Color(0xFFE4EAD8),
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isSelected 
+                            ? HabittusIcons.foodColor 
+                            : const Color(0xFFD9E1D0),
+                        width: 2,
+                      ),
                     ),
                     child: Icon(
                       t.icon,
                       color: isSelected
-                          ? Colors.white
-                          : const Color(0xFF244A24),
+                          ? HabittusIcons.foodColor
+                          : const Color(0xFF7A8A7A),
+                      size: 24,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     t.label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? HabittusIcons.foodColor : Colors.black87,
                     ),
                   ),
                 ],
@@ -976,7 +985,15 @@ class _SelectedTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.restaurant_outlined, color: Color(0xFF244A24)),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: HabittusIcons.foodColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(HabittusIcons.meal, color: HabittusIcons.foodColor, size: 20),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -999,7 +1016,7 @@ class _SelectedTile extends StatelessWidget {
                 color: Color(0xFFDDE6D3),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.remove, size: 18),
+              child: const Icon(HabittusIcons.remove, size: 18),
             ),
           ),
         ],

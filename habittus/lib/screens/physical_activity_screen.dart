@@ -8,6 +8,7 @@ import '../widgets/habittus_drawer.dart';
 import '../widgets/habittus_card.dart';
 import '../widgets/date_pills.dart';
 import '../widgets/weeklybarschart.dart';
+import '../widgets/habittus_icons.dart';
 import 'add_activity_screen.dart';
 
 class PhysicalActivityScreen extends StatefulWidget {
@@ -19,7 +20,7 @@ class PhysicalActivityScreen extends StatefulWidget {
 
 class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
   late DateTime selectedDate;
-  final String userId = 'mock_user_123'; // TODO: Pegar do auth
+  final String visitorId = 'mock_user_123'; // TODO: Pegar do auth
 
   @override
   void initState() {
@@ -39,7 +40,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
       Duration(days: selectedDate.weekday - 1),
     );
     final endOfWeek = startOfWeek.add(const Duration(days: 7));
-    controller.loadActivitiesByDateRange(userId, startOfWeek, endOfWeek);
+    controller.loadActivitiesByDateRange(visitorId, startOfWeek, endOfWeek);
   }
 
   String get monthName => const [
@@ -146,7 +147,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddActivity,
         backgroundColor: const Color(0xFF2F5D2F),
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(HabittusIcons.add, color: Colors.white),
       ),
       body: SafeArea(
         child: Consumer<ActivityController>(
@@ -157,7 +158,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(
-                      Icons.error_outline,
+                      HabittusIcons.info,
                       size: 48,
                       color: Colors.red,
                     ),
@@ -181,11 +182,11 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
             }).toList();
 
             // Calcula totais do dia
-            final totalMinutes = activitiesToday.fold(
+            final totalMinutes = activitiesToday.fold<int>(
               0,
               (sum, a) => sum + a.durationMinutes,
             );
-            final totalCalories = activitiesToday.fold(
+            final totalCalories = activitiesToday.fold<int>(
               0,
               (sum, a) => sum + (a.caloriesBurned ?? 0),
             );
@@ -246,19 +247,19 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                   child: Column(
                     children: [
                       _SummaryRow(
-                        icon: Icons.timer_outlined,
+                        icon: HabittusIcons.timer,
                         label: 'Duração total',
                         value: '$totalMinutes min',
                       ),
                       const SizedBox(height: 8),
                       _SummaryRow(
-                        icon: Icons.local_fire_department_outlined,
+                        icon: HabittusIcons.calories,
                         label: 'Calorias queimadas',
                         value: '$totalCalories kcal',
                       ),
                       const SizedBox(height: 8),
                       _SummaryRow(
-                        icon: Icons.fitness_center_outlined,
+                        icon: HabittusIcons.activity,
                         label: 'Atividades',
                         value: '${activitiesToday.length}',
                       ),
@@ -288,7 +289,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                             child: Column(
                               children: [
                                 Icon(
-                                  Icons.directions_run_outlined,
+                                  HabittusIcons.run,
                                   size: 48,
                                   color: Colors.black38,
                                 ),
@@ -508,7 +509,7 @@ class _ActivityTile extends StatelessWidget {
                         color: Color(0xFFDDE6D3),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.delete_outline, size: 16),
+                      child: const Icon(HabittusIcons.delete, size: 16),
                     ),
                   ),
                 ],
