@@ -1,13 +1,15 @@
 /// Configuração do Supabase
-/// 
-/// Este ficheiro contém as credenciais de acesso ao Supabase.
-/// NOTA: Em produção, estas credenciais devem estar em variáveis de ambiente.
 class SupabaseConfig {
   /// URL do projeto Supabase
   static const String url = 'https://uqilaikcvbnxqieqdtwp.supabase.co';
 
   /// Chave anónima (pública) do Supabase
-  static const String anonKey = 'sb_publishable_muRerJu8naPm6EKqWxET-Q_XBKO21Gh';
+  static const String anonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxaWxhaWtjdmJueHFpZXFkdHdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwOTE1NTYsImV4cCI6MjA4NDY2NzU1Nn0.3lKphmO0YItpZu52ftBgUq5uYbjqe9BKNRdsf8AXILs';
+
+  /// Credenciais do utilizador de serviço (para autenticar a app)
+  static const String serviceEmail = 'app@habittus.com';
+  static const String servicePassword = 'HabittusApp2025!';
 
   /// Tabelas da base de dados
   static const String usersTable = 'users';

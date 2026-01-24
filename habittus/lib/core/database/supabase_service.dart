@@ -4,10 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_config.dart';
 
 /// Design Pattern: SINGLETON
+/// Usa utilizador de serviço para autenticar a app
+/// Login/Registo feito via tabela users
 class SupabaseService {
   static SupabaseService? _instance;
   late final SupabaseClient _client;
   Map<String, dynamic>? _currentUserData;
+  bool _isServiceAuthenticated = false;
 
   SupabaseService._() {
     _client = Supabase.instance.client;
@@ -18,11 +21,39 @@ class SupabaseService {
     return _instance!;
   }
 
+  /// Inicializa Supabase e autentica com utilizador de serviço
   static Future<void> initialize() async {
     await Supabase.initialize(
       url: SupabaseConfig.url,
       anonKey: SupabaseConfig.anonKey,
     );
+    
+    // Autenticar com utilizador de serviço
+    await instance._authenticateService();
+  }
+
+  /// Autentica a app com o utilizador de serviço
+  Future<void> _authenticateService() async {
+    if (_isServiceAuthenticated) return;
+    
+    try {
+      await _client.auth.signInWithPassword(
+        email: SupabaseConfig.serviceEmail,
+        password: SupabaseConfig.servicePassword,
+      );
+      _isServiceAuthenticated = true;
+      print('✓ App autenticada com sucesso');
+    } catch (e) {
+      print('✗ Erro ao autenticar app: $e');
+      rethrow;
+    }
+  }
+
+  /// Garante que a app está autenticada antes de operações
+  Future<void> _ensureAuthenticated() async {
+    if (!_isServiceAuthenticated || _client.auth.currentUser == null) {
+      await _authenticateService();
+    }
   }
 
   SupabaseClient get client => _client;
@@ -30,7 +61,6 @@ class SupabaseService {
 
   // ==================== ENCRIPTAÇÃO ====================
 
-  /// Encripta password com SHA-256
   String _hashPassword(String password) {
     final bytes = utf8.encode(password);
     final digest = sha256.convert(bytes);
@@ -45,7 +75,7 @@ class SupabaseService {
   String? get currentUserEmail => _currentUserData?['email'] as String?;
   bool get isAuthenticated => _currentUserData != null;
 
-  // ==================== AUTENTICAÇÃO ====================
+  // ==================== AUTENTICAÇÃO (via tabela users) ====================
 
   /// Regista novo utilizador na tabela users
   Future<Map<String, dynamic>> signUp({
@@ -58,6 +88,8 @@ class SupabaseService {
     int? heightCm,
     int? weightKg,
   }) async {
+    await _ensureAuthenticated();
+
     // Verificar se email já existe
     final existing = await _client
         .from(SupabaseConfig.usersTable)
@@ -93,11 +125,13 @@ class SupabaseService {
     return response;
   }
 
-  /// Login com email e password
+  /// Login com email e password (via tabela users)
   Future<Map<String, dynamic>> signIn({
     required String email,
     required String password,
   }) async {
+    await _ensureAuthenticated();
+
     // Encriptar password para comparar
     final passwordHash = _hashPassword(password);
 
@@ -116,37 +150,41 @@ class SupabaseService {
     return response;
   }
 
-  /// Logout
+  /// Logout do utilizador da app (mantém autenticação de serviço)
   void signOut() {
     _currentUserData = null;
   }
 
   /// Alterar password
-  Future<void> changePassword(
-    String currentPassword,
-    String newPassword,
-  ) async {
+  Future<void> changePassword(String currentPassword, String newPassword) async {
     if (_currentUserData == null) {
       throw Exception('Utilizador não autenticado');
     }
 
-    final currentHash = _hashPassword(currentPassword);
+    await _ensureAuthenticated();
 
+    final currentHash = _hashPassword(currentPassword);
+    
     // Verificar password atual
     if (_currentUserData!['password_hash'] != currentHash) {
       throw Exception('Password atual incorreta');
     }
 
     final newHash = _hashPassword(newPassword);
-
+    
     await _client
         .from(SupabaseConfig.usersTable)
         .update({'password_hash': newHash})
         .eq('user_id', _currentUserData!['user_id']);
+    
+    // Atualizar dados locais
+    _currentUserData!['password_hash'] = newHash;
   }
 
   /// Obtém dados do utilizador por email
   Future<Map<String, dynamic>?> getUserByEmail(String email) async {
+    await _ensureAuthenticated();
+    
     final response = await _client
         .from(SupabaseConfig.usersTable)
         .select()
@@ -157,6 +195,8 @@ class SupabaseService {
 
   /// Obtém dados do utilizador por ID
   Future<Map<String, dynamic>?> getUserById(int userId) async {
+    await _ensureAuthenticated();
+    
     final response = await _client
         .from(SupabaseConfig.usersTable)
         .select()
@@ -167,13 +207,15 @@ class SupabaseService {
 
   /// Atualiza dados do utilizador
   Future<void> updateUser(int userId, Map<String, dynamic> data) async {
+    await _ensureAuthenticated();
+    
     data['updated_at'] = DateTime.now().toIso8601String();
-
+    
     await _client
         .from(SupabaseConfig.usersTable)
         .update(data)
         .eq('user_id', userId);
-
+    
     if (_currentUserData != null && _currentUserData!['user_id'] == userId) {
       _currentUserData = {..._currentUserData!, ...data};
     }

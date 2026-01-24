@@ -16,10 +16,16 @@ class ActivityController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  int get totalMinutes => _activities.fold(0, (sum, a) => sum + a.durationMinutes);
-  int get totalCalories => _activities.fold(0, (sum, a) => sum + (a.caloriesBurned ?? 0));
+  int get totalMinutes =>
+      _activities.fold(0, (sum, a) => sum + a.durationMinutes);
+  int get totalCalories =>
+      _activities.fold(0, (sum, a) => sum + (a.caloriesBurned ?? 0));
 
-  Future<void> loadActivitiesByDateRange(String userId, DateTime start, DateTime end) async {
+  Future<void> loadActivitiesByDateRange(
+    String userId,
+    DateTime start,
+    DateTime end,
+  ) async {
     _userId = userId;
     _isLoading = true;
     _error = null;
