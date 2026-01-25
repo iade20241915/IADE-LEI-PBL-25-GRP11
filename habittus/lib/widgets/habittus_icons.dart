@@ -60,6 +60,7 @@ class HabittusIcons {
   static const IconData sleepQuality = Icons.nights_stay_outlined;
 
   // ==================== HUMOR ====================
+  static const IconData mood = Icons.emoji_emotions_outlined;
   static const IconData moodVeryBad = Icons.sentiment_very_dissatisfied_outlined;
   static const IconData moodBad = Icons.sentiment_dissatisfied_outlined;
   static const IconData moodNeutral = Icons.sentiment_neutral_outlined;

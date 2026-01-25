@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../controllers/meal_controller.dart';
+import '../repositories/supabase/supabase_meal_repository.dart';
 import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_drawer.dart';
 import '../widgets/habittus_card.dart';
 import '../widgets/weeklybarschart.dart';
 import '../widgets/date_pills.dart';
-import '../widgets/food_detail_dialog.dart';
 import '../widgets/habittus_icons.dart';
+import '../widgets/save_status_banner.dart';
 import 'add_meal_screen.dart';
 
 class MealsScreen extends StatefulWidget {
@@ -24,158 +27,191 @@ class _MealsScreenState extends State<MealsScreen> {
     super.initState();
     final now = DateTime.now();
     d = DateTime(now.year, now.month, now.day);
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+  }
+
+  void _loadData() {
+    context.read<MealController>().load(d);
   }
 
   String get monthName => const [
-    'Janeiro',
-    'Fevereiro',
-    'Março',
-    'Abril',
-    'Maio',
-    'Junho',
-    'Julho',
-    'Agosto',
-    'Setembro',
-    'Outubro',
-    'Novembro',
-    'Dezembro',
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
   ][d.month - 1];
 
   void _setDate(DateTime nd) {
     setState(() => d = DateTime(nd.year, nd.month, nd.day));
+    _loadData();
   }
 
-  String _timeNow() {
-    final t = TimeOfDay.now();
-    final hh = t.hour.toString().padLeft(2, '0');
-    final mm = t.minute.toString().padLeft(2, '0');
-    return '$hh:$mm';
+  Future<void> _openAddMeal({MealEntry? mealToEdit}) async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AddMealScreen(
+          date: d,
+          mealToEdit: mealToEdit,
+        ),
+      ),
+    );
+    
+    if (result == true && mounted) {
+      _loadData();
+    }
   }
 
-  Future<void> _openAddMeal() async {
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => AddMealScreen(date: d)));
-    setState(() {});
+  Future<void> _deleteMeal(MealEntry meal) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFE4EAD8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Apagar refeição?'),
+        content: Text('Tens a certeza que queres apagar "${meal.mealType ?? 'esta refeição'}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Apagar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted && meal.id != null) {
+      await context.read<MealController>().deleteMeal(meal.id!);
+    }
+  }
+
+  IconData _getMealIcon(String? mealType) {
+    switch (mealType?.toLowerCase()) {
+      case 'pequeno-almoço':
+      case 'breakfast':
+        return HabittusIcons.breakfast;
+      case 'almoço':
+      case 'lunch':
+        return HabittusIcons.lunch;
+      case 'lanche':
+      case 'snack':
+        return HabittusIcons.snack;
+      case 'jantar':
+      case 'dinner':
+        return HabittusIcons.dinner;
+      default:
+        return HabittusIcons.meal;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Mock (mantém a tua versão)
-    final meals = [
-      _MealRow('Arroz', 500, HabittusIcons.rice),
-      _MealRow('Massa', 400, HabittusIcons.meal),
-      _MealRow('Salada', 350, HabittusIcons.vegetable),
-      _MealRow('Bacalhau à brás', 400, HabittusIcons.dinner),
-    ];
-
-    // 0..1 (mock)
-    const weeklyValues = [0.95, 0.75, 0.85, 0.9, 0.8, 0.88, 0.92];
-    const weekLabels = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+    final controller = context.watch<MealController>();
+    final meals = controller.meals;
+    final totalKcal = controller.todayCalories;
 
     return Scaffold(
-      drawer: const HabittusDrawer(userName: 'USER_NAME'),
+      drawer: const HabittusDrawer(),
       appBar: const HabittusAppBar(showBack: true),
       backgroundColor: const Color(0xFFF6F8F0),
       floatingActionButton: FloatingActionButton(
-        onPressed: _openAddMeal,
+        onPressed: () => _openAddMeal(),
         backgroundColor: const Color(0xFF2F5D2F),
         child: const Icon(HabittusIcons.add, color: Colors.white),
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            DatePills(
-              day: '${d.day}',
-              month: monthName,
-              year: '${d.year}',
-              onDayPrev: () =>
-                  setState(() => d = d.subtract(const Duration(days: 1))),
-              onDayNext: () =>
-                  setState(() => d = d.add(const Duration(days: 1))),
-              onMonthPrev: () =>
-                  setState(() => d = d = DateTime(d.year, d.month - 1, d.day)),
-              onMonthNext: () =>
-                  setState(() => d = d = DateTime(d.year, d.month + 1, d.day)),
-              onYearPrev: () =>
-                  setState(() => d = DateTime(d.year - 1, d.month, d.day)),
-              onYearNext: () =>
-                  setState(() => d = DateTime(d.year + 1, d.month, d.day)),
-            ),
+        child: controller.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: () async => _loadData(),
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    // Save Status Banner
+                    SaveStatusBanner(
+                      isVisible: controller.saveStatus != MealSaveStatus.idle,
+                      isSaving: controller.saveStatus == MealSaveStatus.saving,
+                      isSuccess: controller.saveStatus == MealSaveStatus.saved,
+                      isError: controller.saveStatus == MealSaveStatus.error,
+                      errorMessage: controller.errorMessage,
+                    ),
 
-            const SizedBox(height: 16),
+                    DatePills(
+                      day: '${d.day}',
+                      month: monthName,
+                      year: '${d.year}',
+                      onDayPrev: () => _setDate(d.subtract(const Duration(days: 1))),
+                      onDayNext: () => _setDate(d.add(const Duration(days: 1))),
+                      onMonthPrev: () => _setDate(DateTime(d.year, d.month - 1, d.day)),
+                      onMonthNext: () => _setDate(DateTime(d.year, d.month + 1, d.day)),
+                      onYearPrev: () => _setDate(DateTime(d.year - 1, d.month, d.day)),
+                      onYearNext: () => _setDate(DateTime(d.year + 1, d.month, d.day)),
+                    ),
 
-            HabittusCard(
-              title: 'Resumo da refeição',
-              subtitle: 'Registo calórico',
-              child: Column(
-                children: meals
-                    .map(
-                      (m) => _MealTile(
-                        title: m.title,
-                        kcal: m.kcal,
-                        icon: m.icon,
-                        onTap: () async {
-                          // Criar FoodItem mock com os dados da refeição
-                          final foodItem = FoodItem(
-                            id: m.title.hashCode.toString(),
-                            name: m.title,
-                            kcalPer100g: m.kcal.toDouble(),
-                            carbsPer100g: 25.0,
-                            proteinPer100g: 5.0,
-                            fatPer100g: 3.0,
-                          );
+                    const SizedBox(height: 16),
 
-                          final updated = await showDialog<FoodItem>(
-                            context: context,
-                            builder: (_) => FoodDetailDialog(food: foodItem),
-                          );
+                    // Resumo da refeição
+                    HabittusCard(
+                      title: 'Resumo da refeição',
+                      subtitle: 'Total: ${totalKcal}kcal',
+                      child: meals.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      HabittusIcons.meal,
+                                      size: 48,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Nenhuma refeição registada',
+                                      style: TextStyle(color: Colors.grey.shade600),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    TextButton.icon(
+                                      onPressed: () => _openAddMeal(),
+                                      icon: const Icon(HabittusIcons.add),
+                                      label: const Text('Adicionar refeição'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : Column(
+                              children: meals.map((meal) {
+                                return _MealTile(
+                                  title: meal.mealType ?? 'Refeição',
+                                  kcal: meal.totalKcal,
+                                  icon: _getMealIcon(meal.mealType),
+                                  itemsCount: meal.items.length,
+                                  onTap: () => _openAddMeal(mealToEdit: meal),
+                                  onDelete: () => _deleteMeal(meal),
+                                );
+                              }).toList(),
+                            ),
+                    ),
 
-                          if (updated != null) {
-                            // Salvar alterações no Supabase
-                            // TODO: Implementar quando tiver repositório
-                            // await mealRepository.updateFood(updated);
-                            setState(() {});
-                          }
-                        },
+                    const SizedBox(height: 14),
+
+                    // Histórico Calorias
+                    HabittusCard(
+                      title: 'Histórico Calorias',
+                      subtitle: 'Últimos 7 dias',
+                      child: WeeklyBarsChart(
+                        values: controller.weeklyChartValues,
+                        labels: controller.weeklyLabels,
                       ),
-                    )
-                    .toList(),
+                    ),
+                  ],
+                ),
               ),
-            ),
-
-            const SizedBox(height: 14),
-
-            HabittusCard(
-              title: 'Histórico Calorias',
-              subtitle: 'Últimos 7 dias',
-              child: WeeklyBarsChart(values: weeklyValues, labels: weekLabels),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/* ===== UI blocks do MealsScreen ===== */
-
-class _SmallPill extends StatelessWidget {
-  final String text;
-  const _SmallPill({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
       ),
     );
   }
@@ -185,13 +221,17 @@ class _MealTile extends StatelessWidget {
   final String title;
   final int kcal;
   final IconData icon;
+  final int itemsCount;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   const _MealTile({
     required this.title,
     required this.kcal,
     required this.icon,
+    required this.itemsCount,
     required this.onTap,
+    required this.onDelete,
   });
 
   @override
@@ -208,7 +248,6 @@ class _MealTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Ícone colorido com fundo
             Container(
               width: 48,
               height: 48,
@@ -220,12 +259,24 @@ class _MealTile extends StatelessWidget {
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                  Text(
+                    '$itemsCount itens',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
               ),
             ),
             Container(
@@ -244,17 +295,41 @@ class _MealTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Icon(HabittusIcons.chevronRight, color: Colors.black54),
+            PopupMenuButton<String>(
+              icon: Icon(HabittusIcons.more, color: Colors.grey.shade600),
+              onSelected: (value) {
+                if (value == 'edit') {
+                  onTap();
+                } else if (value == 'delete') {
+                  onDelete();
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, size: 20),
+                      SizedBox(width: 8),
+                      Text('Editar'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, size: 20, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Apagar', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
-}
-
-class _MealRow {
-  final String title;
-  final int kcal;
-  final IconData icon;
-  const _MealRow(this.title, this.kcal, this.icon);
 }

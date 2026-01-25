@@ -7,8 +7,9 @@ import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_card.dart';
 import '../widgets/habittus_drawer.dart';
 import '../widgets/sleepdurationpicker.dart';
-import '../widgets/weeklywaveschart.dart';
+import '../widgets/weeklybarschart.dart';
 import '../widgets/habittus_icons.dart';
+import '../widgets/save_status_banner.dart';
 
 class SleepTimeScreen extends StatefulWidget {
   const SleepTimeScreen({super.key});
@@ -174,23 +175,10 @@ class _SleepTimeScreenState extends State<SleepTimeScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       controller.setSleepDuration(tempDuration);
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              Icon(HabittusIcons.check, color: Colors.white, size: 20),
-                              const SizedBox(width: 10),
-                              Text('${tempDuration.inHours}h ${tempDuration.inMinutes % 60}min registado!'),
-                            ],
-                          ),
-                          backgroundColor: HabittusIcons.sleepColor,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      );
+                      await controller.save(); // Gravar no Supabase
+                      if (ctx.mounted) Navigator.pop(ctx);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: HabittusIcons.sleepColor,
@@ -235,6 +223,15 @@ class _SleepTimeScreenState extends State<SleepTimeScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            // Banner de status
+            SaveStatusBanner(
+              isVisible: controller.saveStatus != SleepSaveStatus.idle,
+              isSaving: controller.saveStatus == SleepSaveStatus.saving,
+              isSuccess: controller.saveStatus == SleepSaveStatus.saved,
+              isError: controller.saveStatus == SleepSaveStatus.error,
+              errorMessage: controller.errorMessage,
+            ),
+
             DatePills(
               day: '${d.day}',
               month: monthName,
@@ -346,10 +343,14 @@ class _SleepTimeScreenState extends State<SleepTimeScreen> {
 
             const SizedBox(height: 16),
 
-            const HabittusCard(
+            HabittusCard(
               title: 'Histórico semanal',
               subtitle: 'Últimos 7 dias',
-              child: WeeklyWavesChart(),
+              child: WeeklyBarsChart(
+                values: controller.weeklyChartValues,
+                labels: controller.weeklyLabels,
+                hoursLabels: controller.weeklyHoursLabels,
+              ),
             ),
           ],
         ),

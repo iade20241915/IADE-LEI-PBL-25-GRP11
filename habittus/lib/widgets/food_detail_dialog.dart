@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../screens/add_meal_screen.dart'; // Para acessar FoodItem
+import '../models/food_item.dart'; // Import correto do FoodItem
 
 /// Dialog para exibir e editar os detalhes nutricionais de um alimento
 /// Pode ser usado tanto no AddMealScreen quanto no MealsScreen
@@ -50,9 +50,7 @@ class _FoodDetailDialogState extends State<FoodDetailDialog> {
   }
 
   void _saveChanges() {
-    final updatedFood = FoodItem(
-      id: widget.food.id,
-      name: widget.food.name,
+    final updatedFood = widget.food.copyWith(
       kcalPer100g: _parse(kcal),
       carbsPer100g: _parse(carbs),
       proteinPer100g: _parse(protein),

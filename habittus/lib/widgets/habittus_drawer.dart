@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../controllers/user_controller.dart';
 import '../screens/mood_inquiry_screen.dart';
 import '../screens/water_intake_screen.dart';
 import '../screens/sleep_time_screen.dart';
@@ -7,20 +9,25 @@ import '../screens/physical_activity_screen.dart';
 import '../screens/habits_screen.dart';
 import '../screens/menstrual_cycle_screen.dart';
 import '../screens/home_dashboard_screen.dart';
+import '../screens/profile_screen.dart';
 import 'habittus_icons.dart';
 
 class HabittusDrawer extends StatelessWidget {
-  final String userName;
+  final String? userName;
   final bool isDashboard;
 
   const HabittusDrawer({
     super.key,
-    required this.userName,
+    this.userName,
     this.isDashboard = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final userController = context.watch<UserController>();
+    final displayName = userName ?? userController.userName;
+    final userInitials = userController.userInitials;
+    final isFemale = userController.isFemale;
     final label = isDashboard ? 'Voltar ao Login' : 'Voltar';
 
     return Drawer(
@@ -30,15 +37,27 @@ class HabittusDrawer extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Color(0xFFBFDFA8),
-                    child: Icon(Icons.person, size: 40, color: Colors.white),
+              // Avatar clicável
+              InkWell(
+                onTap: () {
+                  Navigator.pop(context); // Fechar drawer
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(40),
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: const Color(0xFF2F5D2F),
+                  child: Text(
+                    userInitials,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ],
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -54,7 +73,7 @@ class HabittusDrawer extends StatelessWidget {
                     child: Column(
                       children: [
                         Text(
-                          'Olá, $userName',
+                          'Olá, $displayName',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -86,7 +105,7 @@ class HabittusDrawer extends StatelessWidget {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => const MoodInquiryScreen(),
+                                builder: (_) => MoodInquiryScreen(isFemale: isFemale),
                               ),
                             );
                           },
@@ -151,18 +170,21 @@ class HabittusDrawer extends StatelessWidget {
                             );
                           },
                         ),
-                        _MenuItem(
-                          icon: HabittusIcons.cycle,
-                          label: 'Ciclo Menstrual',
-                          color: HabittusIcons.cycleColor,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const MenstrualCycleScreen(),
-                              ),
-                            );
-                          },
-                        ),
+                        
+                        // ✅ Ciclo Menstrual - só para utilizadores femininos
+                        if (isFemale)
+                          _MenuItem(
+                            icon: HabittusIcons.cycle,
+                            label: 'Ciclo Menstrual',
+                            color: HabittusIcons.cycleColor,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const MenstrualCycleScreen(),
+                                ),
+                              );
+                            },
+                          ),
 
                         const Divider(height: 32, indent: 16, endIndent: 16),
 

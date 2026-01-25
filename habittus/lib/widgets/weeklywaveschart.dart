@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 
+/// Gráfico de ondas para hidratação
 class WeeklyWavesChart extends StatelessWidget {
-  const WeeklyWavesChart();
+  final List<double> values;
+  final List<String> labels;
+
+  const WeeklyWavesChart({
+    super.key,
+    this.values = const [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    this.labels = const ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'],
+  });
 
   @override
   Widget build(BuildContext context) {
-    // 7 dias, valores 0..1 (mock)
-    const v = [0.9, 0.8, 0.4, 0.3, 0.85, 0.65, 0.95];
-    const labels = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+    final displayValues = values.length >= 7 
+        ? values 
+        : List.filled(7, 0.0);
+    final displayLabels = labels.length >= 7 
+        ? labels 
+        : const ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
 
     return Column(
       children: [
@@ -16,18 +27,22 @@ class WeeklyWavesChart extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: List.generate(7, (i) {
+              final value = displayValues[i].clamp(0.0, 1.0);
               return Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Expanded(
                       child: CustomPaint(
-                        painter: _WaveStemPainter(strength: v[i]),
+                        painter: _WaveStemPainter(strength: value),
                         child: const SizedBox.expand(),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _DayBubble(text: labels[i]),
+                    _DayBubble(
+                      text: displayLabels[i],
+                      isActive: value > 0,
+                    ),
                   ],
                 ),
               );
@@ -41,7 +56,9 @@ class WeeklyWavesChart extends StatelessWidget {
 
 class _DayBubble extends StatelessWidget {
   final String text;
-  const _DayBubble({required this.text});
+  final bool isActive;
+
+  const _DayBubble({required this.text, this.isActive = false});
 
   @override
   Widget build(BuildContext context) {
@@ -50,19 +67,24 @@ class _DayBubble extends StatelessWidget {
       height: 26,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: const Color(0xFFDDECCF),
+        color: isActive ? const Color(0xFF9EBC7D) : const Color(0xFFDDECCF),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: isActive ? Colors.white : Colors.black87,
+        ),
       ),
     );
   }
 }
 
 class _WaveStemPainter extends CustomPainter {
-  final double strength; // 0..1
+  final double strength;
+
   _WaveStemPainter({required this.strength});
 
   @override
@@ -78,32 +100,35 @@ class _WaveStemPainter extends CustomPainter {
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
 
-    // stem (linha clara)
     final stemTop = size.height * 0.05;
     final stemBottom = size.height * 0.95;
+    
+    // Stem (linha de fundo)
     canvas.drawLine(
       Offset(size.width / 2, stemTop),
       Offset(size.width / 2, stemBottom),
       paintStem,
     );
 
-    // wave (curva escura) com altura proporcional
-    final waveHeight = (stemBottom - stemTop) * strength;
-    final startY = stemBottom - waveHeight;
-    final midX = size.width / 2;
+    if (strength > 0) {
+      // Wave (curva proporcional ao valor)
+      final waveHeight = (stemBottom - stemTop) * strength;
+      final startY = stemBottom - waveHeight;
+      final midX = size.width / 2;
 
-    final path = Path();
-    path.moveTo(midX, startY);
+      final path = Path();
+      path.moveTo(midX, startY);
 
-    final seg = waveHeight / 5;
-    for (int i = 0; i < 5; i++) {
-      final y1 = startY + seg * (i + 0.5);
-      final y2 = startY + seg * (i + 1);
-      final dx = (i % 2 == 0) ? 10.0 : -10.0;
-      path.quadraticBezierTo(midX + dx, y1, midX, y2);
+      final seg = waveHeight / 5;
+      for (int i = 0; i < 5; i++) {
+        final y1 = startY + seg * (i + 0.5);
+        final y2 = startY + seg * (i + 1);
+        final dx = (i % 2 == 0) ? 10.0 : -10.0;
+        path.quadraticBezierTo(midX + dx, y1, midX, y2);
+      }
+
+      canvas.drawPath(path, paintWave);
     }
-
-    canvas.drawPath(path, paintWave);
   }
 
   @override

@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 
-/// Gráfico de barras para sono
-class WeeklyBarsChart extends StatelessWidget {
-  final List<double> values;
+/// Gráfico de barras para atividade física (minutos)
+class WeeklyActivityChart extends StatelessWidget {
+  final List<int> minutes;
   final List<String> labels;
-  final List<String>? hoursLabels;
+  final int goalMinutes;
 
-  const WeeklyBarsChart({
+  const WeeklyActivityChart({
     super.key,
-    this.values = const [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    this.minutes = const [0, 0, 0, 0, 0, 0, 0],
     this.labels = const ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'],
-    this.hoursLabels,
+    this.goalMinutes = 60,
   });
 
   @override
   Widget build(BuildContext context) {
-    final displayValues = values.length >= 7 
-        ? values 
-        : List.filled(7, 0.0);
+    final displayMinutes = minutes.length >= 7 
+        ? minutes 
+        : List.filled(7, 0);
     final displayLabels = labels.length >= 7 
         ? labels 
         : const ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
@@ -27,19 +27,20 @@ class WeeklyBarsChart extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: List.generate(7, (i) {
-          final value = displayValues[i].clamp(0.0, 1.2);
-          final hasData = value > 0;
+          final mins = displayMinutes[i];
+          final value = (mins / goalMinutes).clamp(0.0, 1.5);
+          final hasData = mins > 0;
           
           return Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                // Label de horas (se houver)
-                if (hoursLabels != null && hoursLabels!.length > i && hasData)
+                // Label de minutos
+                if (hasData)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
-                      hoursLabels![i],
+                      '${mins}m',
                       style: const TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
@@ -54,13 +55,18 @@ class WeeklyBarsChart extends StatelessWidget {
                     alignment: Alignment.bottomCenter,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      width: 10,
+                      width: 12,
                       height: hasData ? 100 * value : 4,
                       decoration: BoxDecoration(
-                        color: hasData 
-                            ? const Color(0xFF2F5B2F) 
-                            : const Color(0xFFDDECCF),
-                        borderRadius: BorderRadius.circular(8),
+                        gradient: hasData
+                            ? const LinearGradient(
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                                colors: [Color(0xFF4CAF50), Color(0xFF81C784)],
+                              )
+                            : null,
+                        color: hasData ? null : const Color(0xFFE0E0E0),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                     ),
                   ),
@@ -94,7 +100,7 @@ class _DayBubble extends StatelessWidget {
       height: 26,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF2F5B2F) : const Color(0xFFDDECCF),
+        color: isActive ? const Color(0xFF4CAF50) : const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Text(

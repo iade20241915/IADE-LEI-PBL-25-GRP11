@@ -456,10 +456,12 @@ class _HabitDashboardScreenState extends State<HabitDashboardScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Date_Time',
-                          style: TextStyle(color: Colors.black54),
+                          widget.motivation ?? 'Adicionar motivação...',
+                          style: TextStyle(
+                            color: widget.motivation != null ? Colors.black87 : Colors.black54,
+                          ),
                         ),
                       ),
                       const Icon(Icons.chevron_right),

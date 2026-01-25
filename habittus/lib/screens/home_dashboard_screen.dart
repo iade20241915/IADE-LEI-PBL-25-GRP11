@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../controllers/water_controller.dart';
+import '../controllers/sleep_controller.dart';
+import '../controllers/activity_controller.dart';
+import '../controllers/habit_controller.dart';
+import '../controllers/cycle_controller.dart';
+import '../controllers/meal_controller.dart';
+import '../controllers/mood_controller.dart';
+import '../controllers/user_controller.dart';
+import '../models/cycle_entry.dart';
+import '../models/mood.dart';
 import '../widgets/date_pills.dart';
 import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_drawer.dart';
 import '../widgets/weeklywaveschart.dart';
 import '../widgets/weeklybarschart.dart';
+import '../widgets/weekly_activity_chart.dart';
 import '../widgets/habittus_icons.dart';
+import '../widgets/save_status_banner.dart';
+import 'meals_screen.dart';
 
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
@@ -14,161 +28,385 @@ class HomeDashboardScreen extends StatefulWidget {
 }
 
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
-  DateTime d = DateTime(2025, 9, 25);
+  DateTime d = DateTime.now();
+  
   String get monthName => const [
-    'Janeiro',
-    'Fevereiro',
-    'Março',
-    'Abril',
-    'Maio',
-    'Junho',
-    'Julho',
-    'Agosto',
-    'Setembro',
-    'Outubro',
-    'Novembro',
-    'Dezembro',
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
   ][d.month - 1];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+  }
+
+  Future<void> _loadData() async {
+    final waterController = context.read<WaterController>();
+    final sleepController = context.read<SleepController>();
+    final activityController = context.read<ActivityController>();
+    final habitController = context.read<HabitController>();
+    final cycleController = context.read<CycleController>();
+    final mealController = context.read<MealController>();
+    final moodController = context.read<MoodController>();
+    final userController = context.read<UserController>();
+    
+    final futures = <Future>[
+      waterController.load(d),
+      sleepController.load(d),
+      activityController.load(d),
+      habitController.load(),
+      mealController.load(d),
+      moodController.load(d),
+    ];
+    
+    // Só carregar ciclo se for feminino
+    if (userController.isFemale) {
+      futures.add(cycleController.load(d));
+    }
+    
+    await Future.wait(futures);
+  }
+
+  void _setDate(DateTime newDate) {
+    setState(() => d = newDate);
+    _loadData();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final waterController = context.watch<WaterController>();
+    final sleepController = context.watch<SleepController>();
+    final activityController = context.watch<ActivityController>();
+    final habitController = context.watch<HabitController>();
+    final cycleController = context.watch<CycleController>();
+    final mealController = context.watch<MealController>();
+    final moodController = context.watch<MoodController>();
+    final userController = context.watch<UserController>();
+    final userName = userController.userName;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8F0),
-      drawer: const HabittusDrawer(userName: 'USER_NAME', isDashboard: true),
+      drawer: HabittusDrawer(isDashboard: true),
       appBar: const HabittusAppBar(),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(14),
-          children: [
-            DatePills(
-              day: '${d.day}',
-              month: monthName,
-              year: '${d.year}',
-              onDayPrev: () =>
-                  setState(() => d = d.subtract(const Duration(days: 1))),
-              onDayNext: () =>
-                  setState(() => d = d.add(const Duration(days: 1))),
-              onMonthPrev: () =>
-                  setState(() => d = d = DateTime(d.year, d.month - 1, d.day)),
-              onMonthNext: () =>
-                  setState(() => d = d = DateTime(d.year, d.month + 1, d.day)),
-              onYearPrev: () =>
-                  setState(() => d = DateTime(d.year - 1, d.month, d.day)),
-              onYearNext: () =>
-                  setState(() => d = DateTime(d.year + 1, d.month, d.day)),
-            ),
-            const SizedBox(height: 16),
-
-            _Card(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _CardTitle(
-                    icon: HabittusIcons.emotion,
-                    iconColor: HabittusIcons.moodColor,
-                    title: 'Estado de Espírito',
-                    subtitle: 'Registos',
-                  ),
-                  const SizedBox(height: 10),
-                  const _MoodGrid(),
-                ],
+        child: RefreshIndicator(
+          onRefresh: _loadData,
+          child: ListView(
+            padding: const EdgeInsets.all(14),
+            children: [
+              // Saudação
+              Text(
+                'Olá, $userName!',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green.shade800,
+                ),
               ),
-            ),
-
-            const SizedBox(height: 12),
-
-            _Card(
-              background: const Color(0xFFF3F5EA),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _CardTitle(
-                    icon: HabittusIcons.water,
-                    iconColor: HabittusIcons.waterColor,
-                    title: 'Hidratação',
-                    subtitle: 'Histórico semanal',
-                  ),
-                  const SizedBox(height: 12),
-                  const WeeklyWavesChart(),
-                ],
+              const SizedBox(height: 4),
+              Text(
+                'Acompanha os teus hábitos',
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
-            ),
+              const SizedBox(height: 16),
 
-            const SizedBox(height: 12),
-
-            _Card(
-              background: const Color(0xFFF3F5EA),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _CardTitle(
-                    icon: HabittusIcons.sleep,
-                    iconColor: HabittusIcons.sleepColor,
-                    title: 'Horas de Descanso',
-                    subtitle: 'Histórico semanal',
-                  ),
-                  const SizedBox(height: 12),
-                  const WeeklyBarsChart(),
-                ],
+              // Date Pills
+              DatePills(
+                day: '${d.day}',
+                month: monthName,
+                year: '${d.year}',
+                onDayPrev: () => _setDate(d.subtract(const Duration(days: 1))),
+                onDayNext: () => _setDate(d.add(const Duration(days: 1))),
+                onMonthPrev: () => _setDate(DateTime(d.year, d.month - 1, d.day)),
+                onMonthNext: () => _setDate(DateTime(d.year, d.month + 1, d.day)),
+                onYearPrev: () => _setDate(DateTime(d.year - 1, d.month, d.day)),
+                onYearNext: () => _setDate(DateTime(d.year + 1, d.month, d.day)),
               ),
-            ),
+              const SizedBox(height: 16),
 
-            const SizedBox(height: 12),
-
-            _Card(
-              background: const Color(0xFFF3F5EA),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _CardTitle(
-                    icon: HabittusIcons.cycle,
-                    iconColor: HabittusIcons.cycleColor,
-                    title: 'Calendário Menstrual',
-                    subtitle: 'Acompanha o teu ciclo e os teus registos',
+              // Card Hidratação
+              InkWell(
+                onTap: () => Navigator.pushNamed(context, '/water'),
+                borderRadius: BorderRadius.circular(14),
+                child: _Card(
+                  background: const Color(0xFFF3F5EA),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _CardTitle(
+                              icon: HabittusIcons.water,
+                              iconColor: HabittusIcons.waterColor,
+                              title: 'Hidratação',
+                              subtitle: '${waterController.totalMl}ml hoje',
+                            ),
+                          ),
+                          SaveStatusIndicator(
+                            isSaving: waterController.saveStatus == SaveStatus.saving,
+                            isSuccess: waterController.saveStatus == SaveStatus.saved,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      waterController.isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : WeeklyWavesChart(
+                              values: waterController.weeklyChartValues,
+                              labels: waterController.weeklyLabels,
+                            ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  _MonthHeader(
-                    month: 'August',
-                    year: '2025',
-                    onPrev: () {},
-                    onNext: () {},
-                  ),
-                  const SizedBox(height: 10),
-                  const _MiniCalendar(),
-                  const SizedBox(height: 10),
-                  const _CyclePills(),
-                ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            _Card(
-              background: const Color(0xFFF3F5EA),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _CardTitle(
-                    icon: HabittusIcons.fertile,
-                    iconColor: HabittusIcons.cycleColor,
-                    title: 'Ciclo Atual',
-                    subtitle: 'Dias até à próxima menstruação',
+              // Card Sono
+              InkWell(
+                onTap: () => Navigator.pushNamed(context, '/sleep'),
+                borderRadius: BorderRadius.circular(14),
+                child: _Card(
+                  background: const Color(0xFFF3F5EA),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _CardTitle(
+                              icon: HabittusIcons.sleep,
+                              iconColor: HabittusIcons.sleepColor,
+                              title: 'Horas de Descanso',
+                              subtitle: '${sleepController.sleepFormatted} hoje',
+                            ),
+                          ),
+                          SaveStatusIndicator(
+                            isSaving: sleepController.saveStatus == SleepSaveStatus.saving,
+                            isSuccess: sleepController.saveStatus == SleepSaveStatus.saved,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      sleepController.isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : WeeklyBarsChart(
+                              values: sleepController.weeklyChartValues,
+                              labels: sleepController.weeklyLabels,
+                              hoursLabels: sleepController.weeklyHoursLabels,
+                            ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  const _CycleGauge(daysLeft: 19),
-                ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 18),
-          ],
+              const SizedBox(height: 12),
+
+              // Card Atividade Física
+              InkWell(
+                onTap: () => Navigator.pushNamed(context, '/phisical'),
+                borderRadius: BorderRadius.circular(14),
+                child: _Card(
+                  background: const Color(0xFFE8F5E9),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _CardTitle(
+                              icon: HabittusIcons.activity,
+                              iconColor: const Color(0xFF4CAF50),
+                              title: 'Atividade Física',
+                              subtitle: '${activityController.todayMinutes}min hoje',
+                            ),
+                          ),
+                          SaveStatusIndicator(
+                            isSaving: activityController.saveStatus == ActivitySaveStatus.saving,
+                            isSuccess: activityController.saveStatus == ActivitySaveStatus.saved,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      activityController.isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : WeeklyActivityChart(
+                              minutes: activityController.weeklyMinutes,
+                              labels: activityController.weeklyLabels,
+                            ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Card Hábitos
+              InkWell(
+                onTap: () => Navigator.pushNamed(context, '/habits'),
+                borderRadius: BorderRadius.circular(14),
+                child: _Card(
+                  background: const Color(0xFFFFF3E0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _CardTitle(
+                        icon: HabittusIcons.habit,
+                        iconColor: const Color(0xFFFF9800),
+                        title: 'Hábitos',
+                        subtitle: '${habitController.totalHabits} registados',
+                      ),
+                      const SizedBox(height: 12),
+                      habitController.isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _HabitsSummary(
+                              positive: habitController.totalPositive,
+                              negative: habitController.totalNegative,
+                            ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Card Mood / Estado de Espírito
+              InkWell(
+                onTap: () => Navigator.pushNamed(context, '/mood'),
+                borderRadius: BorderRadius.circular(14),
+                child: _Card(
+                  background: const Color(0xFFF3E5F5),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _CardTitle(
+                              icon: HabittusIcons.mood,
+                              iconColor: HabittusIcons.moodColor,
+                              title: 'Estado de Espírito',
+                              subtitle: moodController.selectedLevel != null
+                                  ? _getMoodLabel(moodController.selectedLevel!)
+                                  : 'Sem registo hoje',
+                            ),
+                          ),
+                          SaveStatusIndicator(
+                            isSaving: moodController.saveStatus == MoodSaveStatus.saving,
+                            isSuccess: moodController.saveStatus == MoodSaveStatus.saved,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      moodController.isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _MoodIndicator(level: moodController.selectedLevel),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Card Alimentação
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MealsScreen()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(14),
+                child: _Card(
+                  background: const Color(0xFFE8F5E9),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _CardTitle(
+                              icon: HabittusIcons.meal,
+                              iconColor: HabittusIcons.foodColor,
+                              title: 'Alimentação',
+                              subtitle: '${mealController.todayCalories}kcal hoje',
+                            ),
+                          ),
+                          SaveStatusIndicator(
+                            isSaving: mealController.saveStatus == MealSaveStatus.saving,
+                            isSuccess: mealController.saveStatus == MealSaveStatus.saved,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      mealController.isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : WeeklyBarsChart(
+                              values: mealController.weeklyChartValues,
+                              labels: mealController.weeklyLabels,
+                            ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Card Ciclo Menstrual - só para utilizadores femininos
+              if (userController.isFemale)
+                InkWell(
+                  onTap: () => Navigator.pushNamed(context, '/menstrual-cycle'),
+                  borderRadius: BorderRadius.circular(14),
+                  child: _Card(
+                    background: const Color(0xFFFCE4EC),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _CardTitle(
+                                icon: HabittusIcons.cycle,
+                                iconColor: HabittusIcons.cycleColor,
+                                title: 'Ciclo Menstrual',
+                                subtitle: cycleController.currentPhase?.label ?? 'Sem dados',
+                              ),
+                            ),
+                            SaveStatusIndicator(
+                              isSaving: cycleController.saveStatus == CycleSaveStatus.saving,
+                              isSuccess: cycleController.saveStatus == CycleSaveStatus.saved,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        cycleController.isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : _CycleSummary(
+                                daysUntilPeriod: cycleController.daysUntilNextPeriod,
+                                currentPhase: cycleController.currentPhase,
+                                menstruationDays: cycleController.menstruationDays,
+                                month: d.month,
+                                year: d.year,
+                              ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 18),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/* ---------- CARD / TITLES ---------- */
+/* ---------- WIDGETS AUXILIARES ---------- */
 
 class _Card extends StatelessWidget {
   final Widget child;
@@ -214,11 +452,7 @@ class _CardTitle extends StatelessWidget {
             color: (iconColor ?? HabittusIcons.primaryColor).withOpacity(0.15),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(
-            icon, 
-            size: 20,
-            color: iconColor ?? HabittusIcons.primaryColor,
-          ),
+          child: Icon(icon, size: 20, color: iconColor ?? HabittusIcons.primaryColor),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -227,10 +461,7 @@ class _CardTitle extends StatelessWidget {
             children: [
               Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
-              ),
+              Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.black54)),
             ],
           ),
         ),
@@ -239,126 +470,79 @@ class _CardTitle extends StatelessWidget {
   }
 }
 
-/* ---------- MOOD GRID ---------- */
+class _HabitsSummary extends StatelessWidget {
+  final int positive;
+  final int negative;
 
-class _MoodGrid extends StatelessWidget {
-  const _MoodGrid();
-
-  @override
-  Widget build(BuildContext context) {
-    // 5 colunas como no print, 3 linhas (placeholders)
-    final icons = <IconData>[
-      Icons.favorite_border,
-      Icons.sentiment_neutral,
-      Icons.sentiment_neutral,
-      Icons.sentiment_satisfied,
-      Icons.sentiment_very_satisfied,
-      Icons.local_drink_outlined,
-      Icons.restaurant_outlined,
-      Icons.sentiment_neutral,
-      Icons.bed_outlined,
-      Icons.directions_walk,
-      Icons.spa_outlined,
-      Icons.circle,
-      Icons.circle,
-      Icons.circle,
-      Icons.circle,
-    ];
-
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: List.generate(15, (i) {
-        return Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: const Color(0xFFDDECCF),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icons[i], size: 20),
-        );
-      }),
-    );
-  }
-}
-
-/* ---------- CALENDAR ---------- */
-
-class _MonthHeader extends StatelessWidget {
-  final String month;
-  final String year;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-
-  const _MonthHeader({
-    required this.month,
-    required this.year,
-    required this.onPrev,
-    required this.onNext,
-  });
+  const _HabitsSummary({required this.positive, required this.negative});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text(
-          '$month $year',
-          style: const TextStyle(fontWeight: FontWeight.w700),
+        Expanded(
+          child: _HabitPill(
+            label: 'Positivos',
+            count: positive,
+            color: Colors.green,
+            icon: Icons.trending_up,
+          ),
         ),
-        const Spacer(),
-        IconButton(
-          onPressed: onPrev,
-          icon: const Icon(Icons.chevron_left),
-          visualDensity: VisualDensity.compact,
-        ),
-        IconButton(
-          onPressed: onNext,
-          icon: const Icon(Icons.chevron_right),
-          visualDensity: VisualDensity.compact,
+        const SizedBox(width: 12),
+        Expanded(
+          child: _HabitPill(
+            label: 'A reduzir',
+            count: negative,
+            color: Colors.orange,
+            icon: Icons.trending_down,
+          ),
         ),
       ],
     );
   }
 }
 
-class _MiniCalendar extends StatelessWidget {
-  const _MiniCalendar();
+class _HabitPill extends StatelessWidget {
+  final String label;
+  final int count;
+  final Color color;
+  final IconData icon;
+
+  const _HabitPill({
+    required this.label,
+    required this.count,
+    required this.color,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // layout fixo como no print (placeholder)
-    final days = List.generate(31, (i) => i + 1);
-
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFDDECCF),
-        borderRadius: BorderRadius.circular(14),
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              _Dow('S'),
-              _Dow('M'),
-              _Dow('T'),
-              _Dow('W'),
-              _Dow('T'),
-              _Dow('F'),
-              _Dow('S'),
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+              Text(
+                label,
+                style: const TextStyle(fontSize: 11, color: Colors.black54),
+              ),
             ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: days.map((d) {
-              final isHighlight = d == 17;
-              final isDark = d == 13 || d == 27;
-              return _DayDot(text: '$d', filled: isHighlight, dark: isDark);
-            }).toList(),
           ),
         ],
       ),
@@ -366,190 +550,176 @@ class _MiniCalendar extends StatelessWidget {
   }
 }
 
-class _Dow extends StatelessWidget {
-  final String t;
-  const _Dow(this.t);
+class _CycleSummary extends StatelessWidget {
+  final int? daysUntilPeriod;
+  final dynamic currentPhase;
+  final List<int> menstruationDays;
+  final int month;
+  final int year;
+
+  const _CycleSummary({
+    this.daysUntilPeriod,
+    this.currentPhase,
+    required this.menstruationDays,
+    required this.month,
+    required this.year,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 22,
-      child: Center(
-        child: Text(
-          t,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+    if (daysUntilPeriod == null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
         ),
-      ),
-    );
-  }
-}
-
-class _DayDot extends StatelessWidget {
-  final String text;
-  final bool filled;
-  final bool dark;
-
-  const _DayDot({required this.text, this.filled = false, this.dark = false});
-
-  @override
-  Widget build(BuildContext context) {
-    Color bg = Colors.white.withOpacity(.55);
-    Color fg = Colors.black87;
-
-    if (dark) {
-      bg = const Color(0xFF8A8E8A);
-      fg = Colors.white;
-    }
-    if (filled) {
-      bg = const Color(0xFF2F5B2F);
-      fg = Colors.white;
+        child: const Center(
+          child: Text(
+            'Regista o teu ciclo para ver previsões',
+            style: TextStyle(color: Colors.black54),
+          ),
+        ),
+      );
     }
 
-    return Container(
-      width: 24,
-      height: 24,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 10, color: fg, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}
-
-/* ---------- CYCLE PILLS ---------- */
-
-class _CyclePills extends StatelessWidget {
-  const _CyclePills();
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: const [
-        _OutlinedPill(text: 'Menstruação'),
-        _OutlinedPill(text: 'Ovulação'),
-        _OutlinedPill(text: 'Período Fértil'),
+    return Column(
+      children: [
+        // Gauge circular
+        Center(
+          child: SizedBox(
+            width: 140,
+            height: 140,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: ((28 - daysUntilPeriod!) / 28).clamp(0.0, 1.0),
+                  strokeWidth: 12,
+                  backgroundColor: Colors.pink.shade100,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.pink.shade400),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$daysUntilPeriod',
+                      style: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.pink.shade700,
+                      ),
+                    ),
+                    const Text(
+                      'dias',
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Mini calendário com dias de menstruação
+        if (menstruationDays.isNotEmpty)
+          Wrap(
+            spacing: 6,
+            children: menstruationDays.take(7).map((day) {
+              return Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.pink.shade200,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  '$day',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
       ],
     );
   }
 }
 
-class _OutlinedPill extends StatelessWidget {
-  final String text;
-  const _OutlinedPill({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(.55),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFBFCDB2)),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-      ),
-    );
+/// Helper para obter label do mood
+String _getMoodLabel(MoodLevel level) {
+  switch (level) {
+    case MoodLevel.veryBad:
+      return 'Muito Mal';
+    case MoodLevel.bad:
+      return 'Mal';
+    case MoodLevel.neutral:
+      return 'Neutro';
+    case MoodLevel.good:
+      return 'Bem';
+    case MoodLevel.veryGood:
+      return 'Muito Bem';
   }
 }
 
-/* ---------- CYCLE GAUGE ---------- */
+/// Widget indicador de Mood com emojis
+class _MoodIndicator extends StatelessWidget {
+  final MoodLevel? level;
 
-class _CycleGauge extends StatelessWidget {
-  final int daysLeft;
-  const _CycleGauge({required this.daysLeft});
+  const _MoodIndicator({this.level});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        width: 210,
-        height: 210,
-        child: Stack(
-          alignment: Alignment.center,
+    final moods = [
+      (MoodLevel.veryBad, '😢', 'Muito Mal'),
+      (MoodLevel.bad, '😕', 'Mal'),
+      (MoodLevel.neutral, '😐', 'Neutro'),
+      (MoodLevel.good, '🙂', 'Bem'),
+      (MoodLevel.veryGood, '😄', 'Muito Bem'),
+    ];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: moods.map((mood) {
+        final isSelected = level == mood.$1;
+        return Column(
           children: [
-            CustomPaint(size: const Size(210, 210), painter: _GaugePainter()),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '$daysLeft',
-                  style: const TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.w800,
-                  ),
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? HabittusIcons.moodColor.withOpacity(0.2)
+                    : const Color(0xFFE8E8E8),
+                borderRadius: BorderRadius.circular(22),
+                border: isSelected
+                    ? Border.all(color: HabittusIcons.moodColor, width: 2)
+                    : null,
+              ),
+              child: Text(
+                mood.$2,
+                style: TextStyle(
+                  fontSize: isSelected ? 24 : 20,
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'dias restantes',
-                  style: TextStyle(color: Colors.black54),
-                ),
-              ],
+              ),
             ),
-            const Positioned(
-              right: 18,
-              top: 18,
-              child: Icon(Icons.info_outline, size: 18, color: Colors.black54),
+            const SizedBox(height: 4),
+            Text(
+              mood.$3,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? HabittusIcons.moodColor : Colors.black54,
+              ),
             ),
           ],
-        ),
-      ),
+        );
+      }).toList(),
     );
   }
-}
-
-class _GaugePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final r = size.width / 2 - 18;
-
-    final base = Paint()
-      ..color = const Color(0xFFCEDAC0)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 16
-      ..strokeCap = StrokeCap.round;
-
-    final arc = Paint()
-      ..color = const Color(0xFF9EBC7D)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 16
-      ..strokeCap = StrokeCap.round;
-
-    // base circle
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: r),
-      0,
-      6.283185,
-      false,
-      base,
-    );
-
-    // highlight arc (como no print: 2 segmentos)
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: r),
-      -1.2,
-      1.1,
-      false,
-      arc,
-    );
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: r),
-      1.6,
-      0.6,
-      false,
-      arc,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

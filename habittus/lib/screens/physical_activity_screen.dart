@@ -7,7 +7,7 @@ import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_drawer.dart';
 import '../widgets/habittus_card.dart';
 import '../widgets/date_pills.dart';
-import '../widgets/weeklybarschart.dart';
+import '../widgets/weekly_activity_chart.dart';
 import '../widgets/habittus_icons.dart';
 import 'add_activity_screen.dart';
 
@@ -36,11 +36,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
 
   void _loadActivities() {
     final controller = context.read<ActivityController>();
-    final startOfWeek = selectedDate.subtract(
-      Duration(days: selectedDate.weekday - 1),
-    );
-    final endOfWeek = startOfWeek.add(const Duration(days: 7));
-    controller.loadActivitiesByDateRange(visitorId, startOfWeek, endOfWeek);
+    controller.load(selectedDate, forceReload: true);
   }
 
   String get monthName => const [
@@ -191,9 +187,9 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
               (sum, a) => sum + (a.caloriesBurned ?? 0),
             );
 
-            // Dados para gráfico semanal (mock - implementar cálculo real)
-            const weeklyValues = [0.8, 0.6, 0.9, 0.7, 0.85, 0.5, 0.95];
-            const weekLabels = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+            // Dados para gráfico semanal
+            final weeklyValues = controller.weeklyChartValues;
+            final weekLabels = controller.weeklyLabels;
 
             return ListView(
               padding: const EdgeInsets.all(16),
@@ -329,8 +325,8 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                 HabittusCard(
                   title: 'Progresso semanal',
                   subtitle: 'Últimos 7 dias',
-                  child: WeeklyBarsChart(
-                    values: weeklyValues,
+                  child: WeeklyActivityChart(
+                    minutes: controller.weeklyMinutes,
                     labels: weekLabels,
                   ),
                 ),

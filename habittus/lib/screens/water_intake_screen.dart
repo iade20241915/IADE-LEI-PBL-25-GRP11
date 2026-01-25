@@ -8,6 +8,7 @@ import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_card.dart';
 import '../widgets/habittus_drawer.dart';
 import '../widgets/habittus_icons.dart';
+import '../widgets/save_status_banner.dart';
 
 class WaterIntakeScreen extends StatefulWidget {
   const WaterIntakeScreen({super.key});
@@ -106,6 +107,15 @@ class _WaterIntakeScreenState extends State<WaterIntakeScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            // Banner de status
+            SaveStatusBanner(
+              isVisible: controller.saveStatus != SaveStatus.idle,
+              isSaving: controller.saveStatus == SaveStatus.saving,
+              isSuccess: controller.saveStatus == SaveStatus.saved,
+              isError: controller.saveStatus == SaveStatus.error,
+              errorMessage: controller.errorMessage,
+            ),
+
             DatePills(
               day: '${d.day}',
               month: monthName,
@@ -178,7 +188,10 @@ class _WaterIntakeScreenState extends State<WaterIntakeScreen> {
             HabittusCard(
               title: 'Histórico semanal',
               subtitle: 'Últimos 7 dias',
-              child: WeeklyWavesChart(),
+              child: WeeklyWavesChart(
+                values: controller.weeklyChartValues,
+                labels: controller.weeklyLabels,
+              ),
             ),
           ],
         ),
@@ -270,16 +283,22 @@ class _WaterQuickAddFabState extends State<WaterQuickAddFab>
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _entry;
   bool _open = false;
+  AnimationController? _c;
 
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 160),
-  );
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 160),
+    );
+  }
 
   @override
   void dispose() {
     _removeOverlay();
-    _c.dispose();
+    _c?.dispose();
+    _c = null;
     super.dispose();
   }
 
@@ -290,21 +309,21 @@ class _WaterQuickAddFabState extends State<WaterQuickAddFab>
   }
 
   Future<void> _close() async {
-    if (!_open) return;
-    await _c.reverse();
+    if (!_open || _c == null) return;
+    await _c!.reverse();
     _removeOverlay();
     if (mounted) setState(() {});
   }
 
   Future<void> _openMenu() async {
-    if (_open) return;
+    if (_open || _c == null) return;
 
     _entry = _buildOverlay();
     Overlay.of(context).insert(_entry!);
 
     _open = true;
     if (mounted) setState(() {});
-    await _c.forward();
+    await _c!.forward();
   }
 
   Future<void> _tapAdd(int ml, WaterAddSource src) async {
@@ -333,9 +352,9 @@ class _WaterQuickAddFabState extends State<WaterQuickAddFab>
               child: Material(
                 color: Colors.transparent,
                 child: FadeTransition(
-                  opacity: CurvedAnimation(parent: _c, curve: Curves.easeOut),
+                  opacity: CurvedAnimation(parent: _c!, curve: Curves.easeOut),
                   child: ScaleTransition(
-                    scale: CurvedAnimation(parent: _c, curve: Curves.easeOut),
+                    scale: CurvedAnimation(parent: _c!, curve: Curves.easeOut),
                     alignment: Alignment.bottomRight,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,

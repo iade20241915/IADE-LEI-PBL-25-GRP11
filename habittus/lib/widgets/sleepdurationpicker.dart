@@ -72,98 +72,43 @@ class _SleepDurationPickerState extends State<SleepDurationPicker> {
   Widget build(BuildContext context) {
     final picked = _tToDuration(_value);
 
-    final totalSteps =
-        ((widget.max.inMinutes - widget.min.inMinutes) / widget.step.inMinutes)
-            .round()
-            .clamp(1, 240);
-
     return Row(
       children: [
+        // Slider container
         Expanded(
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFFBFDFA8).withOpacity(0.35),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.green.shade200),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'SLEEP TIME',
-                  style: TextStyle(
-                    color: Colors.green.shade900,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEAF3E3),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-
-                    Positioned.fill(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: List.generate(totalSteps + 1, (i) {
-                            final isMajor = i % 4 == 0;
-                            return Container(
-                              width: isMajor ? 5 : 4,
-                              height: isMajor ? 5 : 4,
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade700.withOpacity(
-                                  isMajor ? 0.75 : 0.35,
-                                ),
-                                shape: BoxShape.circle,
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                    ),
-
-                    SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 10,
-                        overlayShape: SliderComponentShape.noOverlay,
-                        thumbShape: const RoundSliderThumbShape(
-                          enabledThumbRadius: 10,
-                        ),
-                        inactiveTrackColor: Colors.transparent,
-                        activeTrackColor: Colors.transparent,
-                      ),
-                      child: Slider(
-                        value: _value.clamp(0.0, 1.0),
-                        onChanged: (v) {
-                          setState(() => _value = v);
-                          widget.onPick(_tToDuration(v));
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 8,
+                overlayShape: SliderComponentShape.noOverlay,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+                activeTrackColor: Colors.green.shade600,
+                inactiveTrackColor: const Color(0xFFEAF3E3),
+                thumbColor: Colors.green.shade700,
+              ),
+              child: Slider(
+                value: _value.clamp(0.0, 1.0),
+                onChanged: (v) {
+                  setState(() => _value = v);
+                  widget.onPick(_tToDuration(v));
+                },
+              ),
             ),
           ),
         ),
 
         const SizedBox(width: 12),
 
+        // Display container
         Container(
-          width: 92,
-          padding: const EdgeInsets.all(12),
+          width: 80,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           decoration: BoxDecoration(
             color: const Color(0xFFEAF3E3),
             borderRadius: BorderRadius.circular(12),
@@ -175,7 +120,7 @@ class _SleepDurationPickerState extends State<SleepDurationPicker> {
               style: TextStyle(
                 color: Colors.green.shade900,
                 fontWeight: FontWeight.w800,
-                fontSize: 16,
+                fontSize: 18,
               ),
             ),
           ),

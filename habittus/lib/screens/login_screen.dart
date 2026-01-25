@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../core/app_routes.dart';
 import '../core/database/supabase_service.dart';
+import '../controllers/user_controller.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,6 +42,11 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+
+      // Carregar dados do utilizador no UserController
+      if (mounted) {
+        await context.read<UserController>().load();
+      }
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, AppRoutes.home);

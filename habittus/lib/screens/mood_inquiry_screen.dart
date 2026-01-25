@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../controllers/mood_controller.dart';
 import '../models/mood.dart';
+import '../models/cycle_entry.dart';
 import '../widgets/date_pills.dart';
 import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_card.dart';
@@ -25,23 +26,20 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
   late DateTime d;
   final ScrollController _scrollCtrl = ScrollController();
 
-  bool _showDetails = false;
-
-  // ====== (antigo mood_inquiry2) estado local ======
-  String? sleepQuality; // single
+  // ====== Estado local do formulário ======
+  String? sleepQuality;
   final Set<String> emotions = {};
   final Set<String> health = {};
   final Set<String> food = {};
   final Set<String> weather = {};
   final TextEditingController notesCtrl = TextEditingController();
 
-  // ====== (NOVO) sexo feminino ======
-  bool? tookPillToday; // contraceção
-  bool? hadSexToday; // atividade sexual
-  bool? usedProtection; // proteção (só faz sentido se hadSexToday == true)
-
-  final Set<String> menstruationSymptoms = {}; // multi
-  String? menstrualFlow; // single
+  // ====== Dados femininos ======
+  bool? tookPillToday;
+  bool? hadSexToday;
+  bool? usedProtection;
+  final Set<String> menstruationSymptoms = {};
+  String? menstrualFlow;
 
   @override
   void initState() {
@@ -49,7 +47,7 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
     d = _dateOnly(DateTime.now());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<MoodController>().load(d);
+      _loadData();
     });
   }
 
@@ -62,29 +60,67 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
 
   DateTime _dateOnly(DateTime x) => DateTime(x.year, x.month, x.day);
 
+  Future<void> _loadData() async {
+    final controller = context.read<MoodController>();
+    await controller.load(d);
+    
+    // Sincronizar estado local com controller (para edição)
+    if (mounted) {
+      setState(() {
+        // ====== Dados de Mood ======
+        sleepQuality = controller.sleepQuality;
+        emotions.clear();
+        emotions.addAll(controller.emotions);
+        health.clear();
+        health.addAll(controller.health);
+        food.clear();
+        food.addAll(controller.food);
+        weather.clear();
+        weather.addAll(controller.weather);
+        notesCtrl.text = controller.notes ?? '';
+        
+        // ====== Dados de Ciclo (só se feminino) ======
+        if (widget.isFemale) {
+          tookPillToday = controller.tookPill ? true : null;
+          hadSexToday = controller.hadSex ? true : null;
+          usedProtection = controller.usedProtection ? true : null;
+          
+          // Carregar fluxo menstrual
+          if (controller.menstrualFlow != null) {
+            menstrualFlow = controller.menstrualFlow!.label;
+          } else {
+            menstrualFlow = null;
+          }
+          
+          // Carregar sintomas
+          menstruationSymptoms.clear();
+          for (final symptom in controller.symptoms) {
+            menstruationSymptoms.add(symptom.label);
+          }
+        }
+      });
+    }
+  }
+
   void _setDate(DateTime newDate) {
     final nd = _dateOnly(newDate);
     setState(() {
       d = nd;
-      _showDetails = false;
+      // Limpar estado local
+      sleepQuality = null;
+      emotions.clear();
+      health.clear();
+      food.clear();
+      weather.clear();
+      notesCtrl.clear();
+      tookPillToday = null;
+      hadSexToday = null;
+      usedProtection = null;
+      menstruationSymptoms.clear();
+      menstrualFlow = null;
     });
 
-    context.read<MoodController>().load(nd);
-
-    // limpar detalhes ao mudar de dia
-    sleepQuality = null;
-    emotions.clear();
-    health.clear();
-    food.clear();
-    weather.clear();
-    notesCtrl.clear();
-
-    // limpar feminino
-    tookPillToday = null;
-    hadSexToday = null;
-    usedProtection = null;
-    menstruationSymptoms.clear();
-    menstrualFlow = null;
+    _loadData();
   }
 
   String get monthName => const [
@@ -121,19 +157,6 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
     return '$hh:$mm';
   }
 
-  Future<void> _goToDetails() async {
-    setState(() => _showDetails = true);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollCtrl.hasClients) return;
-      _scrollCtrl.animateTo(
-        _scrollCtrl.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<MoodController>();
@@ -143,75 +166,53 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
       appBar: const HabittusAppBar(showBack: true),
       backgroundColor: const Color(0xFFF6F8F0),
       body: SafeArea(
-        child: ListView(
-          controller: _scrollCtrl,
-          padding: const EdgeInsets.all(16),
-          children: [
-            DatePills(
-              day: '${d.day}',
-              month: monthName,
-              year: '${d.year}',
-              onDayPrev: () => _setDate(d.subtract(const Duration(days: 1))),
-              onDayNext: () => _setDate(d.add(const Duration(days: 1))),
-              onMonthPrev: () => _setDate(_safeMonthShift(d, -1)),
-              onMonthNext: () => _setDate(_safeMonthShift(d, 1)),
-              onYearPrev: () => _setDate(DateTime(d.year - 1, d.month, d.day)),
-              onYearNext: () => _setDate(DateTime(d.year + 1, d.month, d.day)),
-            ),
-            const SizedBox(height: 14),
+        child: controller.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : ListView(
+                controller: _scrollCtrl,
+                padding: const EdgeInsets.all(16),
+                children: [
+                  DatePills(
+                    day: '${d.day}',
+                    month: monthName,
+                    year: '${d.year}',
+                    onDayPrev: () => _setDate(d.subtract(const Duration(days: 1))),
+                    onDayNext: () => _setDate(d.add(const Duration(days: 1))),
+                    onMonthPrev: () => _setDate(_safeMonthShift(d, -1)),
+                    onMonthNext: () => _setDate(_safeMonthShift(d, 1)),
+                    onYearPrev: () => _setDate(DateTime(d.year - 1, d.month, d.day)),
+                    onYearNext: () => _setDate(DateTime(d.year + 1, d.month, d.day)),
+                  ),
+                  const SizedBox(height: 14),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [_SmallPill(text: _timeNow())],
-            ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [_SmallPill(text: _timeNow())],
+                  ),
 
-            const SizedBox(height: 18),
+                  const SizedBox(height: 18),
 
-            // ====== PASSO 1 ======
-            HabittusCard(
-              title: 'Como te sentes hoje?',
-              subtitle: 'Seleciona uma opção',
-              child: Align(
-                alignment: Alignment.center,
-                child: _MoodGrid(
-                  selected: controller.selectedLevel,
-                  onSelect: controller.select,
-                ),
+                  // ====== HUMOR ======
+                  HabittusCard(
+                    title: 'Como te sentes hoje?',
+                    subtitle: 'Seleciona uma opção',
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: _MoodGrid(
+                        selected: controller.selectedLevel,
+                        onSelect: controller.select,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // ====== DETALHES (sempre visíveis) ======
+                  _buildDetails(),
+
+                  const SizedBox(height: 24),
+                ],
               ),
-            ),
-
-            const SizedBox(height: 24),
-
-            Center(
-              child: SizedBox(
-                width: 180,
-                child: PrimaryButton(
-                  text: _showDetails ? 'Detalhes (aberto)' : 'Continuar',
-                  onPressed: controller.selectedLevel == null
-                      ? null
-                      : () {
-                          if (_showDetails) return;
-                          _goToDetails();
-                        },
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 18),
-
-            // ====== PASSO 2 (antigo mood_inquiry2) ======
-            AnimatedCrossFade(
-              firstChild: const SizedBox.shrink(),
-              secondChild: _buildDetails(),
-              crossFadeState: _showDetails
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 200),
-            ),
-
-            const SizedBox(height: 24),
-          ],
-        ),
       ),
     );
   }
@@ -492,54 +493,101 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
     return controller.selectedLevel != null;
   }
 
-  /// Grava os dados do humor
+  /// Grava os dados do humor na base de dados
   Future<void> _saveData() async {
     final controller = context.read<MoodController>();
     
-    // Aqui podes salvar todos os dados
-    // Por agora, apenas mostra feedback
+    // Limpar dados antigos do controller e definir novos
+    controller.clearAllData();
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(HabittusIcons.check, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Humor do dia ${d.day}/${d.month} gravado com sucesso!',
+    // Definir qualidade do sono
+    controller.setSleepQuality(sleepQuality);
+    
+    // Definir notas
+    controller.setNotes(notesCtrl.text.isNotEmpty ? notesCtrl.text : null);
+    
+    // Definir emoções
+    for (final emotion in emotions) {
+      controller.toggleEmotion(emotion);
+    }
+    
+    // Definir saúde
+    for (final item in health) {
+      controller.toggleHealth(item);
+    }
+    
+    // Definir comida
+    for (final item in food) {
+      controller.toggleFood(item);
+    }
+    
+    // Definir tempo/clima
+    for (final item in weather) {
+      controller.toggleWeather(item);
+    }
+    
+    // Definir dados femininos
+    controller.setTookPill(tookPillToday == true);
+    controller.setHadSex(hadSexToday == true);
+    controller.setUsedProtection(usedProtection == true);
+    
+    // Definir fluxo menstrual
+    if (menstrualFlow != null) {
+      controller.setMenstrualFlowFromString(menstrualFlow!);
+    }
+    
+    // Definir sintomas
+    for (final symptom in menstruationSymptoms) {
+      controller.toggleSymptomFromString(symptom);
+    }
+    
+    print('[MOOD SCREEN] Dados a gravar:');
+    print('  - Nível: ${controller.selectedLevel}');
+    print('  - Sono: $sleepQuality');
+    print('  - Emoções: $emotions');
+    print('  - Saúde: $health');
+    print('  - Comida: $food');
+    print('  - Tempo: $weather');
+    print('  - Notas: ${notesCtrl.text}');
+    print('  - isFemale: ${widget.isFemale}');
+    print('  - Fluxo menstrual (UI): $menstrualFlow');
+    print('  - Sintomas menstruação (UI): $menstruationSymptoms');
+    print('  - Tomou pílula: $tookPillToday');
+    print('  - Atividade sexual: $hadSexToday');
+    
+    // Chamar save() do controller para gravar na BD
+    await controller.save(isFemale: widget.isFemale);
+    
+    // Mostrar feedback
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                controller.saveStatus == MoodSaveStatus.saved 
+                    ? HabittusIcons.check 
+                    : Icons.error,
+                color: Colors.white,
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  controller.saveStatus == MoodSaveStatus.saved
+                      ? 'Humor do dia ${d.day}/${d.month} gravado com sucesso!'
+                      : 'Erro ao gravar: ${controller.errorMessage}',
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: controller.saveStatus == MoodSaveStatus.saved
+              ? const Color(0xFF2F5D2F)
+              : Colors.red,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
         ),
-        backgroundColor: const Color(0xFF2F5D2F),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-
-    // Limpar formulário após gravar (opcional)
-    setState(() {
-      _showDetails = false;
-      sleepQuality = null;
-      emotions.clear();
-      health.clear();
-      food.clear();
-      weather.clear();
-      notesCtrl.clear();
-      tookPillToday = null;
-      hadSexToday = null;
-      usedProtection = null;
-      menstruationSymptoms.clear();
-      menstrualFlow = null;
-    });
-
-    // Scroll para o topo
-    _scrollCtrl.animateTo(
-      0,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+      );
+    }
   }
 }
 

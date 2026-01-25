@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../screens/register_screen.dart';
+import 'package:provider/provider.dart';
+import '../controllers/user_controller.dart';
+import '../screens/profile_screen.dart';
 
 class HabittusAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBack;
@@ -8,6 +10,8 @@ class HabittusAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userController = context.watch<UserController>();
+    
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -38,13 +42,33 @@ class HabittusAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
 
       actions: [
-        IconButton(
-          icon: const Icon(Icons.person_outline, color: Colors.green),
-          onPressed: () {
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const RegisterScreen()));
+        // Avatar do utilizador
+        InkWell(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            );
           },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            margin: const EdgeInsets.only(right: 12),
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2F5D2F),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                userController.userInitials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );
