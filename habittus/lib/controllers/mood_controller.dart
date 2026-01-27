@@ -63,64 +63,37 @@ class MoodController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ============================================================
-  // LOAD - Carregar todos os dados para uma data
-  // ============================================================
   Future<void> load(DateTime date) async {
     selectedDate = DateTime(date.year, date.month, date.day);
     _isLoading = true;
     _saveStatus = MoodSaveStatus.idle;
     notifyListeners();
 
-    print('[MOOD CONTROLLER] Carregando dados para $selectedDate');
-
     try {
-      // ============================================================
-      // 1. CARREGAR MOOD (tabela mood)
-      // ============================================================
+      // Carregar mood
       final moodEntry = await _moodRepo.getForDate(selectedDate);
       if (moodEntry != null) {
-        print('[MOOD CONTROLLER] Mood encontrado: level=${moodEntry.moodTypeId}');
         _selectedLevel = _moodTypeToLevel(moodEntry.moodTypeId);
         _intensity = moodEntry.intensity ?? 3;
         _notes = moodEntry.notes;
-        
-        // Carregar campos adicionais
-        _sleepQuality = moodEntry.sleepQuality;
-        _emotions.clear();
-        _emotions.addAll(moodEntry.emotions);
-        _health.clear();
-        _health.addAll(moodEntry.health);
-        _food.clear();
-        _food.addAll(moodEntry.food);
-        _weather.clear();
-        _weather.addAll(moodEntry.weather);
-        
-        print('[MOOD CONTROLLER] Dados carregados: sleep=$_sleepQuality, emotions=$_emotions');
       } else {
-        print('[MOOD CONTROLLER] Nenhum mood encontrado');
         _clearMoodState();
       }
 
-      // ============================================================
-      // 2. CARREGAR CICLO (tabela cycle_entry)
-      // ============================================================
+      // Carregar ciclo
       _currentCycle = await _cycleRepo.getForDate(selectedDate);
       if (_currentCycle != null) {
-        print('[MOOD CONTROLLER] Ciclo encontrado: flow=${_currentCycle!.menstrualFlow}');
         _tookPill = _currentCycle!.birthControlTaken;
         _hadSex = _currentCycle!.sexualActivity;
         _menstrualFlow = _currentCycle!.menstrualFlow;
         _symptoms.clear();
         _symptoms.addAll(_currentCycle!.symptoms);
       } else {
-        print('[MOOD CONTROLLER] Nenhum ciclo encontrado');
         _clearCycleState();
       }
 
       _errorMessage = null;
     } catch (e) {
-      print('[MOOD CONTROLLER ERROR] $e');
       _errorMessage = 'Erro ao carregar: $e';
     }
 
@@ -250,49 +223,25 @@ class MoodController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ============================================================
-  // SAVE - Gravar todos os dados (mood + ciclo)
-  // ============================================================
-  Future<void> save({bool isFemale = true}) async {
+  /// Grava todos os dados (mood + ciclo)
+  Future<void> save() async {
     _saveStatus = MoodSaveStatus.saving;
     notifyListeners();
 
-    print('[MOOD CONTROLLER] Gravando dados para $selectedDate');
-    print('[MOOD CONTROLLER] Level: $_selectedLevel, Sleep: $_sleepQuality');
-    print('[MOOD CONTROLLER] Emotions: $_emotions, Health: $_health');
-    print('[MOOD CONTROLLER] Food: $_food, Weather: $_weather');
-
     try {
-      // ============================================================
-      // 1. GUARDAR MOOD (tabela mood)
-      // ============================================================
+      // Guardar mood
       if (_selectedLevel != null) {
         final moodEntry = mood_repo.MoodEntry(
           moodTypeId: _levelToMoodType(_selectedLevel!),
           createdAt: selectedDate,
           intensity: _intensity,
-          notes: _notes,
-          sleepQuality: _sleepQuality,
-          emotions: _emotions.toList(),
-          health: _health.toList(),
-          food: _food.toList(),
-          weather: _weather.toList(),
+          notes: _buildNotesString(),
         );
         await _moodRepo.save(moodEntry);
-        print('[MOOD CONTROLLER] Mood gravado com sucesso!');
       }
 
-      // ============================================================
-      // 2. GUARDAR CICLO (tabela cycle_entry) - só se feminino
-      // ============================================================
-      print('[MOOD CONTROLLER] Verificando se deve gravar ciclo:');
-      print('  - isFemale: $isFemale');
-      print('  - _menstrualFlow: $_menstrualFlow');
-      print('  - _symptoms: $_symptoms');
-      print('  - _tookPill: $_tookPill');
-      print('  - _hadSex: $_hadSex');
-      
-      if (isFemale && (_menstrualFlow != null || _symptoms.isNotEmpty || _tookPill || _hadSex)) {
+      // Guardar ciclo
+      if (_menstrualFlow != null || _symptoms.isNotEmpty || _tookPill || _hadSex) {
         final cycleEntry = CycleEntry(
           id: _currentCycle?.id ?? '',
           userId: '',
@@ -303,19 +252,12 @@ class MoodController extends ChangeNotifier {
           sexualActivity: _hadSex,
           notes: _notes,
         );
-        print('[MOOD CONTROLLER] CycleEntry a gravar:');
-        print('  - menstrualFlow: ${cycleEntry.menstrualFlow}');
-        print('  - symptoms: ${cycleEntry.symptoms}');
         await _cycleRepo.save(cycleEntry);
-        print('[MOOD CONTROLLER] Ciclo gravado com sucesso!');
-      } else {
-        print('[MOOD CONTROLLER] Ciclo NÃO gravado (condições não satisfeitas)');
       }
 
       _saveStatus = MoodSaveStatus.saved;
       _errorMessage = null;
     } catch (e) {
-      print('[MOOD CONTROLLER ERROR] Erro ao guardar: $e');
       _saveStatus = MoodSaveStatus.error;
       _errorMessage = 'Erro ao guardar: $e';
     }
@@ -328,6 +270,26 @@ class MoodController extends ChangeNotifier {
         notifyListeners();
       }
     });
+  }
+
+  String _buildNotesString() {
+    final parts = <String>[];
+    
+    // Construir string com dados (abreviados para caber no campo)
+    if (_sleepQuality != null) parts.add('S:$_sleepQuality');
+    if (_emotions.isNotEmpty) parts.add('E:${_emotions.length}');
+    if (_health.isNotEmpty) parts.add('H:${_health.length}');
+    if (_food.isNotEmpty) parts.add('F:${_food.length}');
+    if (_weather.isNotEmpty) parts.add('W:${_weather.length}');
+    if (_notes != null && _notes!.isNotEmpty) {
+      // Adicionar notas truncadas se houver espaço
+      final notesShort = _notes!.length > 20 ? _notes!.substring(0, 20) : _notes!;
+      parts.add(notesShort);
+    }
+
+    final result = parts.join('|');
+    // Truncar para 45 caracteres (limite do campo VARCHAR(45))
+    return result.length > 45 ? result.substring(0, 45) : result;
   }
 
   void clearStatus() {
@@ -344,25 +306,12 @@ class MoodController extends ChangeNotifier {
     _health.clear();
     _food.clear();
     _weather.clear();
-    _tookPill = false;
-    _hadSex = false;
-    _usedProtection = false;
-    _menstrualFlow = null;
-    _symptoms.clear();
+    // Não limpar _selectedLevel pois é selecionado separadamente
   }
 
-  /// Define fluxo menstrual a partir de string (ID do UI)
+  /// Define fluxo menstrual a partir de string
   void setMenstrualFlowFromString(String flow) {
-    print('[MOOD CONTROLLER] setMenstrualFlowFromString: "$flow"');
     switch (flow.toLowerCase()) {
-      case 'nenhum':
-        _menstrualFlow = MenstrualFlow.none;
-        break;
-      case 'spots':
-      case 'spotting':
-        _menstrualFlow = MenstrualFlow.spotting;
-        break;
-      case 'muito leve':
       case 'leve':
         _menstrualFlow = MenstrualFlow.light;
         break;
@@ -370,20 +319,16 @@ class MoodController extends ChangeNotifier {
         _menstrualFlow = MenstrualFlow.medium;
         break;
       case 'intenso':
-      case 'muito intenso':
         _menstrualFlow = MenstrualFlow.heavy;
         break;
       default:
-        print('[MOOD CONTROLLER] Fluxo não reconhecido: "$flow"');
         _menstrualFlow = null;
     }
-    print('[MOOD CONTROLLER] _menstrualFlow definido para: $_menstrualFlow');
     notifyListeners();
   }
 
-  /// Toggle sintoma a partir de string (ID do UI)
+  /// Toggle sintoma a partir de string
   void toggleSymptomFromString(String symptom) {
-    print('[MOOD CONTROLLER] toggleSymptomFromString: "$symptom"');
     CycleSymptom? cycleSymptom;
     switch (symptom.toLowerCase()) {
       case 'cólicas':
@@ -393,48 +338,32 @@ class MoodController extends ChangeNotifier {
         cycleSymptom = CycleSymptom.headache;
         break;
       case 'inchaço':
-      case 'barriga inchada':
         cycleSymptom = CycleSymptom.bloating;
         break;
       case 'fadiga':
-      case 'cansaço':
         cycleSymptom = CycleSymptom.fatigue;
         break;
       case 'náuseas':
-      case 'enjoos':
         cycleSymptom = CycleSymptom.nausea;
         break;
       case 'dor nas costas':
-      case 'dor lombar':
         cycleSymptom = CycleSymptom.backPain;
         break;
       case 'sensibilidade mamária':
-      case 'seios sensíveis':
         cycleSymptom = CycleSymptom.breastTenderness;
         break;
       case 'alterações de humor':
-      case 'tonturas':
         cycleSymptom = CycleSymptom.moodSwings;
         break;
       case 'acne':
-      case 'borbulhas':
         cycleSymptom = CycleSymptom.acne;
         break;
       case 'insónia':
         cycleSymptom = CycleSymptom.insomnia;
         break;
-      case 'aumento do apetite':
-        cycleSymptom = CycleSymptom.cravings;
-        break;
-      case 'sangramento':
-        // Sangramento é tratado via fluxo menstrual, não sintoma
-        break;
-      default:
-        print('[MOOD CONTROLLER] Sintoma não reconhecido: "$symptom"');
     }
     if (cycleSymptom != null) {
       toggleSymptom(cycleSymptom);
-      print('[MOOD CONTROLLER] Sintoma adicionado: $cycleSymptom');
     }
   }
 }

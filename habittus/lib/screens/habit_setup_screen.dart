@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../core/database/supabase_service.dart';
 import '../models/habit.dart';
 import '../widgets/habittus_app_bar.dart';
-import '../widgets/habittus_card.dart';
 import '../widgets/primary_button.dart';
 
 class HabitSetupScreen extends StatefulWidget {
@@ -77,7 +77,7 @@ class _HabitSetupScreenState extends State<HabitSetupScreen> {
 
     final habit = Habit(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userId: 'mock_user_123',
+      userId: SupabaseService.instance.currentUserId?.toString() ?? '',
       name: habitNameController.text.isEmpty
           ? selectedCategory!.label
           : habitNameController.text,

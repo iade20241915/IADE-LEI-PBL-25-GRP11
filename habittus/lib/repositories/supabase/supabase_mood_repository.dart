@@ -74,19 +74,7 @@ class MoodEntry {
 /// REPOSITÓRIO SUPABASE - MOOD (Estado de Espírito)
 /// ============================================================
 /// Este repositório implementa as operações CRUD para a tabela 'mood'
-/// 
-/// ESTRUTURA DA TABELA mood:
-/// - mood_id          SERIAL PRIMARY KEY
-/// - user_id          INT (FK para users)
-/// - mood_type_id     INT (FK para mood_types: 1-5)
-/// - created_at       TIMESTAMP
-/// - intensity        INT (1-5)
-/// - notes            VARCHAR(500) - Notas livres
-/// - sleep_quality    VARCHAR(50) - 'Muito Boa', 'Boa', 'OK', 'Má', 'Muito Má'
-/// - emotions         VARCHAR(500) - Lista separada por vírgula
-/// - health           VARCHAR(500) - Lista separada por vírgula
-/// - food             VARCHAR(500) - Lista separada por vírgula
-/// - weather          VARCHAR(200) - Lista separada por vírgula
+/// Utiliza queries SQL através da API do Supabase
 /// ============================================================
 class SupabaseMoodRepository {
   final SupabaseService _supabase = SupabaseService.instance;
@@ -120,13 +108,13 @@ class SupabaseMoodRepository {
       // ============================================================
       final response = await _supabase
           .from('mood')
-          .select('*, mood_types(*)')
-          .eq('user_id', _userId)
-          .gte('created_at', startOfDay.toIso8601String())
-          .lt('created_at', endOfDay.toIso8601String())
-          .order('created_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
+          .select('*, mood_types(*)')        // JOIN com mood_types
+          .eq('user_id', _userId)            // WHERE user_id = $1
+          .gte('created_at', startOfDay.toIso8601String())  // AND created_at >= $2
+          .lt('created_at', endOfDay.toIso8601String())     // AND created_at < $3
+          .order('created_at', ascending: false)  // ORDER BY created_at DESC
+          .limit(1)                          // LIMIT 1
+          .maybeSingle();                    // Retorna null se não existir
 
       if (response == null) {
         print('[MOOD SELECT] Nenhum registo encontrado');
@@ -134,7 +122,6 @@ class SupabaseMoodRepository {
       }
       
       print('[MOOD SELECT] Encontrado: mood_id=${response['mood_id']}, type=${response['mood_type_id']}');
-      print('[MOOD SELECT] Dados extras: sleep=${response['sleep_quality']}, emotions=${response['emotions']}');
       return MoodEntry.fromJson(response);
     } catch (e) {
       print('[MOOD SELECT ERROR] $e');
@@ -145,6 +132,9 @@ class SupabaseMoodRepository {
   // ============================================================
   // INSERT / UPDATE - Guardar ou atualizar mood (UPSERT)
   // ============================================================
+  // Se já existe registo para o dia: UPDATE
+  // Se não existe: INSERT
+  // ============================================================
   Future<void> save(MoodEntry entry) async {
     if (_userId == 0) {
       print('[MOOD SAVE] userId é 0, abortando');
@@ -154,12 +144,14 @@ class SupabaseMoodRepository {
     final startOfDay = DateTime(entry.createdAt.year, entry.createdAt.month, entry.createdAt.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
-    print('[MOOD SAVE] Guardando para user=$_userId, data=$startOfDay');
-    print('[MOOD SAVE] Dados: type=${entry.moodTypeId}, sleep=${entry.sleepQuality}');
-    print('[MOOD SAVE] Listas: emotions=${entry.emotions}, health=${entry.health}');
+    print('[MOOD SAVE] Guardando mood_type=${entry.moodTypeId} para user=$_userId, data=$startOfDay');
 
     try {
-      // Verificar se já existe registo
+      // ============================================================
+      // QUERY: SELECT para verificar se já existe registo
+      // SELECT mood_id FROM mood 
+      // WHERE user_id = $1 AND created_at >= $2 AND created_at < $3
+      // ============================================================
       final existing = await _supabase
           .from('mood')
           .select('mood_id')
@@ -168,23 +160,18 @@ class SupabaseMoodRepository {
           .lt('created_at', endOfDay.toIso8601String())
           .maybeSingle();
 
-      // ============================================================
-      // DADOS A GUARDAR (todos os campos)
-      // ============================================================
+      // Dados a guardar
       final data = {
         'mood_type_id': entry.moodTypeId,
         'intensity': entry.intensity,
         'notes': entry.notes,
-        'sleep_quality': entry.sleepQuality,
-        'emotions': entry.emotions.isNotEmpty ? entry.emotions.join(',') : null,
-        'health': entry.health.isNotEmpty ? entry.health.join(',') : null,
-        'food': entry.food.isNotEmpty ? entry.food.join(',') : null,
-        'weather': entry.weather.isNotEmpty ? entry.weather.join(',') : null,
       };
 
       if (existing != null) {
         // ============================================================
-        // UPDATE - Atualizar registo existente
+        // QUERY: UPDATE - Atualizar registo existente
+        // UPDATE mood SET mood_type_id=$1, intensity=$2, notes=$3
+        // WHERE mood_id = $4
         // ============================================================
         print('[MOOD UPDATE] Atualizando mood_id=${existing['mood_id']}');
         
@@ -196,7 +183,9 @@ class SupabaseMoodRepository {
         print('[MOOD UPDATE] Sucesso!');
       } else {
         // ============================================================
-        // INSERT - Criar novo registo
+        // QUERY: INSERT - Criar novo registo
+        // INSERT INTO mood (user_id, mood_type_id, created_at, intensity, notes)
+        // VALUES ($1, $2, $3, $4, $5)
         // ============================================================
         print('[MOOD INSERT] Criando novo registo');
         
@@ -219,10 +208,16 @@ class SupabaseMoodRepository {
   // ============================================================
   // SELECT - Obter tipos de mood disponíveis
   // ============================================================
+  // Query SQL:
+  // SELECT * FROM mood_types ORDER BY mood_type_id
+  // ============================================================
   Future<List<Map<String, dynamic>>> getMoodTypes() async {
     print('[MOOD_TYPES SELECT] Obtendo tipos de mood');
     
     try {
+      // ============================================================
+      // QUERY: SELECT todos os tipos de mood
+      // ============================================================
       final response = await _supabase
           .from('mood_types')
           .select()
@@ -237,7 +232,54 @@ class SupabaseMoodRepository {
   }
 
   // ============================================================
+  // SELECT / INSERT - Obter ou criar tipo de mood
+  // ============================================================
+  Future<int> getOrCreateMoodType(String moodName) async {
+    print('[MOOD_TYPE] Obtendo/criando tipo: $moodName');
+    
+    try {
+      // ============================================================
+      // QUERY: SELECT para verificar se tipo existe
+      // SELECT mood_type_id FROM mood_types WHERE mood = $1
+      // ============================================================
+      final existing = await _supabase
+          .from('mood_types')
+          .select('mood_type_id')
+          .eq('mood', moodName)
+          .maybeSingle();
+
+      if (existing != null) {
+        print('[MOOD_TYPE SELECT] Encontrado: ${existing['mood_type_id']}');
+        return existing['mood_type_id'] as int;
+      }
+
+      // ============================================================
+      // QUERY: INSERT novo tipo de mood
+      // INSERT INTO mood_types (mood) VALUES ($1) RETURNING mood_type_id
+      // ============================================================
+      print('[MOOD_TYPE INSERT] Criando novo tipo');
+      
+      final result = await _supabase
+          .from('mood_types')
+          .insert({'mood': moodName})
+          .select('mood_type_id')
+          .single();
+
+      print('[MOOD_TYPE INSERT] Criado: ${result['mood_type_id']}');
+      return result['mood_type_id'] as int;
+    } catch (e) {
+      print('[MOOD_TYPE ERROR] $e');
+      return 1;
+    }
+  }
+
+  // ============================================================
   // SELECT - Obter moods da semana para gráfico
+  // ============================================================
+  // Query SQL:
+  // SELECT * FROM mood 
+  // WHERE user_id = $1 AND created_at >= $2 AND created_at < $3
+  // ORDER BY created_at ASC
   // ============================================================
   Future<List<MoodEntry>> getWeekMoods(DateTime endDate) async {
     if (_userId == 0) return [];
@@ -248,6 +290,9 @@ class SupabaseMoodRepository {
     print('[MOOD WEEK SELECT] De $start a $end');
 
     try {
+      // ============================================================
+      // QUERY: SELECT moods da semana com JOIN
+      // ============================================================
       final response = await _supabase
           .from('mood')
           .select('*, mood_types(*)')
@@ -270,6 +315,9 @@ class SupabaseMoodRepository {
 
   // ============================================================
   // DELETE - Apagar registo de mood
+  // ============================================================
+  // Query SQL:
+  // DELETE FROM mood WHERE mood_id = $1
   // ============================================================
   Future<void> delete(int moodId) async {
     print('[MOOD DELETE] Apagando mood_id=$moodId');

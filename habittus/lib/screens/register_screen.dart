@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '../core/app_routes.dart';
 import '../core/database/supabase_service.dart';
 import '../models/user_model.dart';
 
@@ -14,7 +12,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controllers
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -66,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       },
     );
-    
+
     if (picked != null) {
       setState(() => _birthDate = picked);
     }
@@ -82,16 +80,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final supabase = SupabaseService.instance;
-      
+
       await supabase.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         fullName: _nameController.text.trim(),
-        phone: _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null,
+        phone: _phoneController.text.trim().isNotEmpty
+            ? _phoneController.text.trim()
+            : null,
         birthDate: _birthDate?.toIso8601String().split('T')[0],
         gender: _gender?.code,
-        heightCm: _heightController.text.isNotEmpty ? int.tryParse(_heightController.text) : null,
-        weightKg: _weightController.text.isNotEmpty ? int.tryParse(_weightController.text) : null,
+        heightCm: _heightController.text.isNotEmpty
+            ? int.tryParse(_heightController.text)
+            : null,
+        weightKg: _weightController.text.isNotEmpty
+            ? int.tryParse(_weightController.text)
+            : null,
       );
 
       setState(() {
@@ -105,9 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 Icon(Icons.check_circle, color: Colors.white),
                 SizedBox(width: 10),
-                Expanded(
-                  child: Text('Conta criada com sucesso!'),
-                ),
+                Expanded(child: Text('Conta criada com sucesso!')),
               ],
             ),
             backgroundColor: Colors.green.shade700,
@@ -175,10 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Comece a sua jornada de bem-estar',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                 ),
 
                 const SizedBox(height: 24),
@@ -194,7 +193,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     child: Column(
                       children: [
-                        Icon(Icons.check_circle, color: Colors.green.shade700, size: 48),
+                        Icon(
+                          Icons.check_circle,
+                          color: Colors.green.shade700,
+                          size: 48,
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           'Conta criada com sucesso!',
@@ -226,12 +229,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                        Icon(
+                          Icons.error_outline,
+                          color: Colors.red.shade700,
+                          size: 20,
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+                            style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ],
@@ -275,7 +285,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       if (value == null || value.isEmpty) {
                         return 'Introduza o email';
                       }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      if (!RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      ).hasMatch(value)) {
                         return 'Email inválido';
                       }
                       return null;
@@ -300,9 +312,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: TextFormField(
                         decoration: InputDecoration(
                           labelText: 'Data de Nascimento',
-                          hintText: _birthDate != null ? _formatDate(_birthDate!) : 'Selecione a data',
-                          prefixIcon: Icon(Icons.cake_outlined, color: Colors.green.shade600),
-                          suffixIcon: Icon(Icons.calendar_today, color: Colors.grey.shade400),
+                          hintText: _birthDate != null
+                              ? _formatDate(_birthDate!)
+                              : 'Selecione a data',
+                          prefixIcon: Icon(
+                            Icons.cake_outlined,
+                            color: Colors.green.shade600,
+                          ),
+                          suffixIcon: Icon(
+                            Icons.calendar_today,
+                            color: Colors.grey.shade400,
+                          ),
                           filled: true,
                           fillColor: Colors.white,
                           border: OutlineInputBorder(
@@ -311,7 +331,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         controller: TextEditingController(
-                          text: _birthDate != null ? _formatDate(_birthDate!) : '',
+                          text: _birthDate != null
+                              ? _formatDate(_birthDate!)
+                              : '',
                         ),
                       ),
                     ),
@@ -320,10 +342,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                   // Género
                   DropdownButtonFormField<Gender>(
-                    value: _gender,
+                    initialValue: _gender,
                     decoration: InputDecoration(
                       labelText: 'Género',
-                      prefixIcon: Icon(Icons.wc_outlined, color: Colors.green.shade600),
+                      prefixIcon: Icon(
+                        Icons.wc_outlined,
+                        color: Colors.green.shade600,
+                      ),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -332,10 +357,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     items: Gender.values.map((g) {
-                      return DropdownMenuItem(
-                        value: g,
-                        child: Text(g.label),
-                      );
+                      return DropdownMenuItem(value: g, child: Text(g.label));
                     }).toList(),
                     onChanged: (value) => setState(() => _gender = value),
                   ),
@@ -356,7 +378,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           hint: '175',
                           icon: Icons.height,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -367,7 +391,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           hint: '70',
                           icon: Icons.monitor_weight_outlined,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                         ),
                       ),
                     ],
@@ -388,10 +414,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: _obscurePassword,
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey,
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -414,10 +443,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: _obscureConfirmPassword,
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey,
                       ),
-                      onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                      onPressed: () => setState(
+                        () =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword,
+                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {

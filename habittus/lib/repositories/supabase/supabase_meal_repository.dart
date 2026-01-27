@@ -20,7 +20,10 @@ class MealEntry {
 
   int get totalKcal => items.fold(0, (sum, item) => sum + item.kcal);
 
-  factory MealEntry.fromJson(Map<String, dynamic> json, [List<MealItemEntry>? items]) {
+  factory MealEntry.fromJson(
+    Map<String, dynamic> json, [
+    List<MealItemEntry>? items,
+  ]) {
     return MealEntry(
       id: json['meal_id'] as int?,
       userId: json['user_id'] as int?,
@@ -81,15 +84,24 @@ class MealItemEntry {
     required this.kcal,
   });
 
-  factory MealItemEntry.fromJson(Map<String, dynamic> json, [Map<String, dynamic>? food]) {
+  factory MealItemEntry.fromJson(
+    Map<String, dynamic> json, [
+    Map<String, dynamic>? food,
+  ]) {
     return MealItemEntry(
       id: json['meal_item_id'] as int?,
       mealId: json['meal_id'] as int?,
       foodId: json['food_id'] as int?,
-      foodName: food?['name'] as String? ?? json['food_name'] as String? ?? 'Desconhecido',
+      foodName:
+          food?['name'] as String? ??
+          json['food_name'] as String? ??
+          'Desconhecido',
       quantity: (json['quantity'] as num?)?.toDouble() ?? 0,
       unitName: json['unit_name'] as String? ?? 'g',
-      kcal: (json['kcal_override'] as num?)?.toInt() ?? (json['kcal'] as num?)?.toInt() ?? 0,
+      kcal:
+          (json['kcal_override'] as num?)?.toInt() ??
+          (json['kcal'] as num?)?.toInt() ??
+          0,
     );
   }
 
@@ -126,7 +138,9 @@ class SupabaseMealRepository {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
-    print('getForDate: Buscando refeições de $startOfDay a $endOfDay para user $userId');
+    print(
+      'getForDate: Buscando refeições de $startOfDay a $endOfDay para user $userId',
+    );
 
     try {
       final response = await _supabase
@@ -139,7 +153,7 @@ class SupabaseMealRepository {
 
       print('getForDate: Resposta: $response');
 
-      if (response == null) return [];
+      //if (response == null) return [];
 
       final meals = (response as List).map((json) {
         final itemsJson = json['meal_item'] as List? ?? [];
@@ -175,7 +189,7 @@ class SupabaseMealRepository {
         'created_at': meal.createdAt.toIso8601String(),
         'notes': meal.notes,
       };
-      
+
       print('saveMeal: Dados a inserir: $data');
 
       final result = await _supabase
@@ -227,7 +241,9 @@ class SupabaseMealRepository {
       throw Exception('Utilizador não autenticado');
     }
 
-    print('saveMealWithItems: Guardando ${meal.mealType} com ${meal.items.length} itens');
+    print(
+      'saveMealWithItems: Guardando ${meal.mealType} com ${meal.items.length} itens',
+    );
 
     try {
       // Criar refeição
@@ -260,17 +276,11 @@ class SupabaseMealRepository {
       // Atualizar dados da refeição
       await _supabase
           .from('meal')
-          .update({
-            'meal_type': meal.mealType,
-            'notes': meal.notes,
-          })
+          .update({'meal_type': meal.mealType, 'notes': meal.notes})
           .eq('meal_id', meal.id!);
 
       // Apagar itens antigos
-      await _supabase
-          .from('meal_item')
-          .delete()
-          .eq('meal_id', meal.id!);
+      await _supabase.from('meal_item').delete().eq('meal_id', meal.id!);
 
       // Adicionar novos itens
       for (final item in meal.items) {
@@ -290,16 +300,10 @@ class SupabaseMealRepository {
 
     try {
       // Primeiro apagar itens (se não houver CASCADE)
-      await _supabase
-          .from('meal_item')
-          .delete()
-          .eq('meal_id', mealId);
+      await _supabase.from('meal_item').delete().eq('meal_id', mealId);
 
       // Depois apagar refeição
-      await _supabase
-          .from('meal')
-          .delete()
-          .eq('meal_id', mealId);
+      await _supabase.from('meal').delete().eq('meal_id', mealId);
 
       print('deleteMeal: Concluído com sucesso');
     } catch (e) {
@@ -344,9 +348,12 @@ class SupabaseMealRepository {
   Future<List<int>> getWeeklyCalories(DateTime endDate) async {
     final end = DateTime(endDate.year, endDate.month, endDate.day);
     final start = end.subtract(const Duration(days: 6));
-    
+
     final startStr = start.toIso8601String().split('T')[0];
-    final endStr = end.add(const Duration(days: 1)).toIso8601String().split('T')[0];
+    final endStr = end
+        .add(const Duration(days: 1))
+        .toIso8601String()
+        .split('T')[0];
 
     print('getWeeklyCalories: De $startStr a $endStr (1 query)');
 
@@ -368,9 +375,13 @@ class SupabaseMealRepository {
         final createdAtStr = meal['created_at'] as String;
         final createdAt = DateTime.parse(createdAtStr);
         // Normalizar para usar apenas a data (sem horas)
-        final mealDate = DateTime(createdAt.year, createdAt.month, createdAt.day);
+        final mealDate = DateTime(
+          createdAt.year,
+          createdAt.month,
+          createdAt.day,
+        );
         final dayIndex = mealDate.difference(start).inDays;
-        
+
         if (dayIndex >= 0 && dayIndex < 7) {
           final items = meal['meal_item'] as List? ?? [];
           for (final item in items) {
@@ -436,7 +447,7 @@ class SupabaseMealRepository {
           .cast<String>()
           .toSet()
           .toList();
-      
+
       categories.sort();
       return categories;
     } catch (e) {

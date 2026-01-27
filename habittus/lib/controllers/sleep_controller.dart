@@ -98,17 +98,8 @@ class SleepController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setTimes(DateTime start, DateTime end) {
-    _startTime = start;
-    _endTime = end;
-    sleepDuration = Duration(minutes: end.difference(start).inMinutes.abs());
-    notifyListeners();
-  }
-
-  void setQuality(int quality) {
-    qualityScore = quality;
-    notifyListeners();
-  }
+  // NOTA: setTimes() e setQuality() removidos por não estarem em uso
+  // Podem ser re-adicionados se necessários para extensibilidade futura
 
   Future<void> save() async {
     _saveStatus = SleepSaveStatus.saving;

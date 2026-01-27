@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/habit_controller.dart';
+import '../core/database/supabase_service.dart';
 import '../models/habit.dart';
 import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_card.dart';
@@ -15,7 +16,7 @@ class HabitDetailScreen extends StatefulWidget {
 }
 
 class _HabitDetailScreenState extends State<HabitDetailScreen> {
-  final String userId = 'mock_user_123';
+  String get userId => SupabaseService.instance.currentUserId?.toString() ?? '';
 
   @override
   void initState() {

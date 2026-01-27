@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/activity_controller.dart';
+import '../core/database/supabase_service.dart';
 import '../models/physical_activity.dart';
 import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_drawer.dart';
@@ -20,7 +21,8 @@ class PhysicalActivityScreen extends StatefulWidget {
 
 class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
   late DateTime selectedDate;
-  final String visitorId = 'mock_user_123'; // TODO: Pegar do auth
+  String get visitorId =>
+      SupabaseService.instance.currentUserId?.toString() ?? '';
 
   @override
   void initState() {
@@ -153,11 +155,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      HabittusIcons.info,
-                      size: 48,
-                      color: Colors.red,
-                    ),
+                    const Icon(HabittusIcons.info, size: 48, color: Colors.red),
                     const SizedBox(height: 16),
                     Text(controller.error!),
                     const SizedBox(height: 16),
@@ -188,7 +186,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
             );
 
             // Dados para gráfico semanal
-            final weeklyValues = controller.weeklyChartValues;
+            //final weeklyValues = controller.weeklyChartValues;
             final weekLabels = controller.weeklyLabels;
 
             return ListView(

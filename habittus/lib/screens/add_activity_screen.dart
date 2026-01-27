@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/database/supabase_service.dart';
 import '../models/physical_activity.dart';
 import '../services/location_service.dart';
 import '../widgets/habittus_app_bar.dart';
@@ -246,7 +247,7 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
       id: isEditing
           ? widget.activityToEdit!.id
           : DateTime.now().millisecondsSinceEpoch.toString(),
-      userId: 'mock_user_123', // TODO: Pegar do auth
+      userId: SupabaseService.instance.currentUserId?.toString() ?? '',
       timestamp: timestamp,
       activityType: selectedType,
       durationMinutes: duration,

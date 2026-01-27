@@ -49,7 +49,7 @@ class WaterController extends ChangeNotifier {
     final log = await _repo.getForDate(selectedDate);
     _totalMl = log?.totalMl ?? 0;
     await _loadWeek();
-    
+
     _isLoading = false;
     notifyListeners();
   }
@@ -70,7 +70,7 @@ class WaterController extends ChangeNotifier {
   Future<void> toggleCup(int index, {required int gridSize}) async {
     final newCups = index < cups ? index : (index + 1).clamp(0, gridSize);
     final newTotalMl = newCups * defaultMlPerCup;
-    
+
     _totalMl = newTotalMl;
     _saveStatus = SaveStatus.saving;
     notifyListeners();
@@ -78,11 +78,13 @@ class WaterController extends ChangeNotifier {
     try {
       // Usar saveOrUpdateDaily se disponível
       if (_repo is SupabaseWaterRepository) {
-        await (_repo as SupabaseWaterRepository).saveOrUpdateDaily(
-          WaterLog(date: selectedDate, amountMl: newTotalMl, cups: newCups)
+        await (_repo).saveOrUpdateDaily(
+          WaterLog(date: selectedDate, amountMl: newTotalMl, cups: newCups),
         );
       } else {
-        await _repo.save(WaterLog(date: selectedDate, amountMl: newTotalMl, cups: newCups));
+        await _repo.save(
+          WaterLog(date: selectedDate, amountMl: newTotalMl, cups: newCups),
+        );
       }
       await _loadWeek();
       _saveStatus = SaveStatus.saved;
@@ -91,7 +93,7 @@ class WaterController extends ChangeNotifier {
       _saveStatus = SaveStatus.error;
       _errorMessage = 'Erro ao guardar: $e';
     }
-    
+
     notifyListeners();
 
     Future.delayed(const Duration(seconds: 2), () {
@@ -110,7 +112,7 @@ class WaterController extends ChangeNotifier {
 
     try {
       if (_repo is SupabaseWaterRepository) {
-        await (_repo as SupabaseWaterRepository).addWater(ml, source: source);
+        await (_repo).addWater(ml, source: source);
       } else {
         await _repo.save(WaterLog(date: selectedDate, amountMl: _totalMl));
       }
@@ -122,7 +124,7 @@ class WaterController extends ChangeNotifier {
       _saveStatus = SaveStatus.error;
       _errorMessage = 'Erro ao guardar: $e';
     }
-    
+
     notifyListeners();
 
     Future.delayed(const Duration(seconds: 2), () {

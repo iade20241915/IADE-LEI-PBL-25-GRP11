@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/meal_controller.dart';
-import '../models/food_item.dart';
 import '../repositories/supabase/supabase_meal_repository.dart';
 import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_card.dart';
@@ -21,28 +20,40 @@ enum MealType { breakfast, lunch, snack, dinner }
 extension MealTypeX on MealType {
   String get label {
     switch (this) {
-      case MealType.breakfast: return 'P. Almoço';
-      case MealType.lunch: return 'Almoço';
-      case MealType.snack: return 'Lanche';
-      case MealType.dinner: return 'Jantar';
+      case MealType.breakfast:
+        return 'P. Almoço';
+      case MealType.lunch:
+        return 'Almoço';
+      case MealType.snack:
+        return 'Lanche';
+      case MealType.dinner:
+        return 'Jantar';
     }
   }
 
   String get dbValue {
     switch (this) {
-      case MealType.breakfast: return 'Pequeno-almoço';
-      case MealType.lunch: return 'Almoço';
-      case MealType.snack: return 'Lanche';
-      case MealType.dinner: return 'Jantar';
+      case MealType.breakfast:
+        return 'Pequeno-almoço';
+      case MealType.lunch:
+        return 'Almoço';
+      case MealType.snack:
+        return 'Lanche';
+      case MealType.dinner:
+        return 'Jantar';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case MealType.breakfast: return HabittusIcons.breakfast;
-      case MealType.lunch: return HabittusIcons.lunch;
-      case MealType.snack: return HabittusIcons.snack;
-      case MealType.dinner: return HabittusIcons.dinner;
+      case MealType.breakfast:
+        return HabittusIcons.breakfast;
+      case MealType.lunch:
+        return HabittusIcons.lunch;
+      case MealType.snack:
+        return HabittusIcons.snack;
+      case MealType.dinner:
+        return HabittusIcons.dinner;
     }
   }
 
@@ -96,11 +107,16 @@ class SelectedFoodItem {
     );
   }
 
-  factory SelectedFoodItem.fromFood(Map<String, dynamic> food, double quantity) {
+  factory SelectedFoodItem.fromFood(
+    Map<String, dynamic> food,
+    double quantity,
+  ) {
     final kcalRaw = food['kcal_per_100g'];
-    final kcalPer100g = kcalRaw is int ? kcalRaw : (kcalRaw as num?)?.toInt() ?? 0;
+    final kcalPer100g = kcalRaw is int
+        ? kcalRaw
+        : (kcalRaw as num?)?.toInt() ?? 0;
     final calculatedKcal = ((kcalPer100g * quantity) / 100).round();
-    
+
     return SelectedFoodItem(
       name: food['name'] as String,
       quantity: quantity,
@@ -134,7 +150,7 @@ class SelectedFoodItem {
 
 IconData getIconFromName(String? iconName) {
   if (iconName == null || iconName.isEmpty) return Icons.restaurant;
-  
+
   const iconMap = <String, IconData>{
     'apple': Icons.apple,
     'favorite': Icons.favorite,
@@ -188,9 +204,10 @@ IconData getIconFromName(String? iconName) {
     'local_fire_department': Icons.local_fire_department,
     'soup_kitchen': Icons.soup_kitchen,
     'pets': Icons.pets,
-    'nutrition': Icons.restaurant_menu, // nutrition não existe, usar alternativa
+    'nutrition':
+        Icons.restaurant_menu, // nutrition não existe, usar alternativa
   };
-  
+
   return iconMap[iconName] ?? Icons.restaurant;
 }
 
@@ -202,11 +219,7 @@ class AddMealScreen extends StatefulWidget {
   final DateTime date;
   final MealEntry? mealToEdit;
 
-  const AddMealScreen({
-    super.key,
-    required this.date,
-    this.mealToEdit,
-  });
+  const AddMealScreen({super.key, required this.date, this.mealToEdit});
 
   @override
   State<AddMealScreen> createState() => _AddMealScreenState();
@@ -216,14 +229,16 @@ class _AddMealScreenState extends State<AddMealScreen> {
   late DateTime d;
   MealType selectedMealType = MealType.lunch;
   final List<SelectedFoodItem> selectedItems = [];
-  
+
   final TextEditingController searchCtrl = TextEditingController();
   final TextEditingController quantityCtrl = TextEditingController(text: '100');
   final TextEditingController customFoodCtrl = TextEditingController();
-  final TextEditingController customKcalCtrl = TextEditingController(text: '100');
-  
+  final TextEditingController customKcalCtrl = TextEditingController(
+    text: '100',
+  );
+
   final SupabaseMealRepository _repo = SupabaseMealRepository();
-  
+
   List<Map<String, dynamic>> _searchResults = [];
   List<String> _categories = [];
   String? _selectedCategory;
@@ -236,16 +251,16 @@ class _AddMealScreenState extends State<AddMealScreen> {
   void initState() {
     super.initState();
     d = DateTime(widget.date.year, widget.date.month, widget.date.day);
-    
+
     _loadCategories();
     _loadPopularFoods();
-    
+
     if (widget.mealToEdit != null) {
       final mealType = MealTypeX.fromString(widget.mealToEdit!.mealType);
       if (mealType != null) {
         selectedMealType = mealType;
       }
-      
+
       for (final item in widget.mealToEdit!.items) {
         selectedItems.add(SelectedFoodItem.fromMealItem(item));
       }
@@ -286,9 +301,9 @@ class _AddMealScreenState extends State<AddMealScreen> {
     }
 
     setState(() => _isSearching = true);
-    
+
     final results = await _repo.searchFoods(query);
-    
+
     if (mounted) {
       setState(() {
         _searchResults = results;
@@ -303,9 +318,9 @@ class _AddMealScreenState extends State<AddMealScreen> {
       _isSearching = true;
       _selectedCategory = category;
     });
-    
+
     final results = await _repo.getFoodsByCategory(category);
-    
+
     if (mounted) {
       setState(() {
         _searchResults = results;
@@ -320,8 +335,18 @@ class _AddMealScreenState extends State<AddMealScreen> {
   }
 
   String get monthName => const [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
   ][d.month - 1];
 
   int get totalKcal => selectedItems.fold(0, (sum, item) => sum + item.kcal);
@@ -330,20 +355,22 @@ class _AddMealScreenState extends State<AddMealScreen> {
     return category
         .replaceAll('_', ' ')
         .split(' ')
-        .map((word) => word.isNotEmpty 
-            ? '${word[0].toUpperCase()}${word.substring(1)}' 
-            : '')
+        .map(
+          (word) => word.isNotEmpty
+              ? '${word[0].toUpperCase()}${word.substring(1)}'
+              : '',
+        )
         .join(' ');
   }
 
   void _addFoodFromSearch(Map<String, dynamic> food) {
     final quantity = double.tryParse(quantityCtrl.text) ?? 100;
-    
+
     setState(() {
       selectedItems.add(SelectedFoodItem.fromFood(food, quantity));
       _errorMessage = null;
     });
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${food['name']} adicionado!'),
@@ -364,18 +391,15 @@ class _AddMealScreenState extends State<AddMealScreen> {
     final kcal = int.tryParse(customKcalCtrl.text) ?? 100;
 
     setState(() {
-      selectedItems.add(SelectedFoodItem(
-        name: name,
-        quantity: quantity,
-        unit: 'g',
-        kcal: kcal,
-      ));
+      selectedItems.add(
+        SelectedFoodItem(name: name, quantity: quantity, unit: 'g', kcal: kcal),
+      );
       customFoodCtrl.clear();
       customKcalCtrl.text = '100';
       _showCustomFood = false;
       _errorMessage = null;
     });
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$name adicionado!'),
@@ -388,7 +412,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
   void _removeItem(int index) {
     final item = selectedItems[index];
     setState(() => selectedItems.removeAt(index));
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${item.name} removido'),
@@ -405,8 +429,10 @@ class _AddMealScreenState extends State<AddMealScreen> {
 
   void _editItemQuantity(int index) async {
     final item = selectedItems[index];
-    final controller = TextEditingController(text: item.quantity.toStringAsFixed(0));
-    
+    final controller = TextEditingController(
+      text: item.quantity.toStringAsFixed(0),
+    );
+
     final result = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -425,7 +451,9 @@ class _AddMealScreenState extends State<AddMealScreen> {
                 suffixText: 'g',
                 filled: true,
                 fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             if (item.kcalPer100g > 0) ...[
@@ -455,7 +483,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
         ],
       ),
     );
-    
+
     if (result != null && result > 0) {
       setState(() {
         item.updateQuantity(result);
@@ -476,9 +504,9 @@ class _AddMealScreenState extends State<AddMealScreen> {
 
     try {
       final controller = context.read<MealController>();
-      
+
       final mealItems = selectedItems.map((item) => item.toMealItem()).toList();
-      
+
       final meal = MealEntry(
         id: widget.mealToEdit?.id,
         mealType: selectedMealType.dbValue,
@@ -523,12 +551,22 @@ class _AddMealScreenState extends State<AddMealScreen> {
                     day: '${d.day}',
                     month: monthName,
                     year: '${d.year}',
-                    onDayPrev: () => setState(() => d = d.subtract(const Duration(days: 1))),
-                    onDayNext: () => setState(() => d = d.add(const Duration(days: 1))),
-                    onMonthPrev: () => setState(() => d = DateTime(d.year, d.month - 1, d.day)),
-                    onMonthNext: () => setState(() => d = DateTime(d.year, d.month + 1, d.day)),
-                    onYearPrev: () => setState(() => d = DateTime(d.year - 1, d.month, d.day)),
-                    onYearNext: () => setState(() => d = DateTime(d.year + 1, d.month, d.day)),
+                    onDayPrev: () =>
+                        setState(() => d = d.subtract(const Duration(days: 1))),
+                    onDayNext: () =>
+                        setState(() => d = d.add(const Duration(days: 1))),
+                    onMonthPrev: () => setState(
+                      () => d = DateTime(d.year, d.month - 1, d.day),
+                    ),
+                    onMonthNext: () => setState(
+                      () => d = DateTime(d.year, d.month + 1, d.day),
+                    ),
+                    onYearPrev: () => setState(
+                      () => d = DateTime(d.year - 1, d.month, d.day),
+                    ),
+                    onYearNext: () => setState(
+                      () => d = DateTime(d.year + 1, d.month, d.day),
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -537,7 +575,8 @@ class _AddMealScreenState extends State<AddMealScreen> {
                     title: 'Tipo de refeição',
                     child: _MealTypeSelector(
                       selected: selectedMealType,
-                      onSelect: (type) => setState(() => selectedMealType = type),
+                      onSelect: (type) =>
+                          setState(() => selectedMealType = type),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -602,7 +641,10 @@ class _AddMealScreenState extends State<AddMealScreen> {
                         // Quantidade default
                         Row(
                           children: [
-                            const Text('Quantidade: ', style: TextStyle(fontWeight: FontWeight.w500)),
+                            const Text(
+                              'Quantidade: ',
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
                             SizedBox(
                               width: 80,
                               child: TextField(
@@ -612,7 +654,10 @@ class _AddMealScreenState extends State<AddMealScreen> {
                                 decoration: InputDecoration(
                                   suffixText: 'g',
                                   isDense: true,
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 8,
+                                  ),
                                   filled: true,
                                   fillColor: Colors.white,
                                   border: OutlineInputBorder(
@@ -623,9 +668,15 @@ class _AddMealScreenState extends State<AddMealScreen> {
                             ),
                             const Spacer(),
                             TextButton.icon(
-                              onPressed: () => setState(() => _showCustomFood = !_showCustomFood),
-                              icon: Icon(_showCustomFood ? Icons.close : Icons.add),
-                              label: Text(_showCustomFood ? 'Cancelar' : 'Criar alimento'),
+                              onPressed: () => setState(
+                                () => _showCustomFood = !_showCustomFood,
+                              ),
+                              icon: Icon(
+                                _showCustomFood ? Icons.close : Icons.add,
+                              ),
+                              label: Text(
+                                _showCustomFood ? 'Cancelar' : 'Criar alimento',
+                              ),
                             ),
                           ],
                         ),
@@ -638,7 +689,9 @@ class _AddMealScreenState extends State<AddMealScreen> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFD9E1D0)),
+                              border: Border.all(
+                                color: const Color(0xFFD9E1D0),
+                              ),
                             ),
                             child: Column(
                               children: [
@@ -673,8 +726,14 @@ class _AddMealScreenState extends State<AddMealScreen> {
                                   width: double.infinity,
                                   child: ElevatedButton.icon(
                                     onPressed: _addCustomFood,
-                                    icon: const Icon(Icons.add, color: Colors.white),
-                                    label: const Text('Adicionar', style: TextStyle(color: Colors.white)),
+                                    icon: const Icon(
+                                      Icons.add,
+                                      color: Colors.white,
+                                    ),
+                                    label: const Text(
+                                      'Adicionar',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF2F5D2F),
                                     ),
@@ -702,19 +761,23 @@ class _AddMealScreenState extends State<AddMealScreen> {
                                       onPressed: _clearCategoryFilter,
                                     ),
                                   ),
-                                ..._categories.map((cat) => Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: ChoiceChip(
-                                    label: Text(_formatCategory(cat)),
-                                    selected: _selectedCategory == cat,
-                                    onSelected: (selected) {
-                                      if (selected) {
-                                        _loadFoodsByCategory(cat);
-                                      }
-                                    },
-                                    selectedColor: const Color(0xFF2F5D2F).withOpacity(0.2),
+                                ..._categories.map(
+                                  (cat) => Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: ChoiceChip(
+                                      label: Text(_formatCategory(cat)),
+                                      selected: _selectedCategory == cat,
+                                      onSelected: (selected) {
+                                        if (selected) {
+                                          _loadFoodsByCategory(cat);
+                                        }
+                                      },
+                                      selectedColor: const Color(
+                                        0xFF2F5D2F,
+                                      ).withOpacity(0.2),
+                                    ),
                                   ),
-                                )),
+                                ),
                               ],
                             ),
                           ),
@@ -735,16 +798,25 @@ class _AddMealScreenState extends State<AddMealScreen> {
                               padding: const EdgeInsets.all(20),
                               child: Column(
                                 children: [
-                                  Icon(Icons.search_off, size: 48, color: Colors.grey.shade400),
+                                  Icon(
+                                    Icons.search_off,
+                                    size: 48,
+                                    color: Colors.grey.shade400,
+                                  ),
                                   const SizedBox(height: 8),
                                   Text(
                                     'Nenhum alimento encontrado',
-                                    style: TextStyle(color: Colors.grey.shade600),
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                    ),
                                   ),
                                   const SizedBox(height: 8),
                                   TextButton(
-                                    onPressed: () => setState(() => _showCustomFood = true),
-                                    child: const Text('Criar alimento personalizado'),
+                                    onPressed: () =>
+                                        setState(() => _showCustomFood = true),
+                                    child: const Text(
+                                      'Criar alimento personalizado',
+                                    ),
                                   ),
                                 ],
                               ),
@@ -759,12 +831,16 @@ class _AddMealScreenState extends State<AddMealScreen> {
                               itemBuilder: (context, index) {
                                 final food = _searchResults[index];
                                 final kcalRaw = food['kcal_per_100g'];
-                                final kcalValue = kcalRaw is int ? kcalRaw : (kcalRaw as num?)?.toInt() ?? 0;
+                                final kcalValue = kcalRaw is int
+                                    ? kcalRaw
+                                    : (kcalRaw as num?)?.toInt() ?? 0;
                                 return _FoodSearchTile(
                                   name: food['name'] as String,
                                   kcalPer100g: kcalValue,
                                   category: food['category'] as String?,
-                                  icon: getIconFromName(food['icon'] as String?),
+                                  icon: getIconFromName(
+                                    food['icon'] as String?,
+                                  ),
                                   onTap: () => _addFoodFromSearch(food),
                                 );
                               },
@@ -787,7 +863,8 @@ class _AddMealScreenState extends State<AddMealScreen> {
                             final item = entry.value;
                             return _SelectedItemTile(
                               name: item.name,
-                              quantity: '${item.quantity.toStringAsFixed(0)}${item.unit}',
+                              quantity:
+                                  '${item.quantity.toStringAsFixed(0)}${item.unit}',
                               kcal: item.kcal,
                               icon: getIconFromName(item.icon),
                               onEdit: () => _editItemQuantity(index),
@@ -847,7 +924,9 @@ class _AddMealScreenState extends State<AddMealScreen> {
                               Icon(isEditing ? Icons.save : Icons.add),
                               const SizedBox(width: 8),
                               Text(
-                                isEditing ? 'Atualizar refeição' : 'Guardar refeição',
+                                isEditing
+                                    ? 'Atualizar refeição'
+                                    : 'Guardar refeição',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -856,7 +935,10 @@ class _AddMealScreenState extends State<AddMealScreen> {
                               if (selectedItems.isNotEmpty) ...[
                                 const SizedBox(width: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(12),
@@ -992,7 +1074,10 @@ class _FoodSearchTile extends StatelessWidget {
                   if (category != null)
                     Text(
                       category!.replaceAll('_', ' '),
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                 ],
               ),
@@ -1005,7 +1090,10 @@ class _FoodSearchTile extends StatelessWidget {
               ),
               child: Text(
                 '${kcalPer100g}kcal/100g',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -1059,10 +1147,7 @@ class _SelectedItemTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
+                Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
                 Text(
                   quantity,
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),

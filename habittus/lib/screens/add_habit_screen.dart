@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/database/supabase_service.dart';
 import '../models/habit.dart';
 import '../widgets/habittus_app_bar.dart';
 import '../widgets/primary_button.dart';
@@ -54,7 +55,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       id: isEditing
           ? widget.habitToEdit!.id
           : DateTime.now().millisecondsSinceEpoch.toString(),
-      userId: 'mock_user_123',
+      userId: SupabaseService.instance.currentUserId?.toString() ?? '',
       name: nameController.text.trim(),
       type: widget.type,
       category: selectedCategory,

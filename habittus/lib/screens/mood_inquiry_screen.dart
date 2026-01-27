@@ -63,7 +63,7 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
   Future<void> _loadData() async {
     final controller = context.read<MoodController>();
     await controller.load(d);
-    
+
     // Sincronizar estado local com controller (para edição)
     if (mounted) {
       setState(() {
@@ -78,20 +78,20 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
         weather.clear();
         weather.addAll(controller.weather);
         notesCtrl.text = controller.notes ?? '';
-        
+
         // ====== Dados de Ciclo (só se feminino) ======
         if (widget.isFemale) {
           tookPillToday = controller.tookPill ? true : null;
           hadSexToday = controller.hadSex ? true : null;
           usedProtection = controller.usedProtection ? true : null;
-          
+
           // Carregar fluxo menstrual
           if (controller.menstrualFlow != null) {
             menstrualFlow = controller.menstrualFlow!.label;
           } else {
             menstrualFlow = null;
           }
-          
+
           // Carregar sintomas
           menstruationSymptoms.clear();
           for (final symptom in controller.symptoms) {
@@ -176,12 +176,15 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
                     day: '${d.day}',
                     month: monthName,
                     year: '${d.year}',
-                    onDayPrev: () => _setDate(d.subtract(const Duration(days: 1))),
+                    onDayPrev: () =>
+                        _setDate(d.subtract(const Duration(days: 1))),
                     onDayNext: () => _setDate(d.add(const Duration(days: 1))),
                     onMonthPrev: () => _setDate(_safeMonthShift(d, -1)),
                     onMonthNext: () => _setDate(_safeMonthShift(d, 1)),
-                    onYearPrev: () => _setDate(DateTime(d.year - 1, d.month, d.day)),
-                    onYearNext: () => _setDate(DateTime(d.year + 1, d.month, d.day)),
+                    onYearPrev: () =>
+                        _setDate(DateTime(d.year - 1, d.month, d.day)),
+                    onYearNext: () =>
+                        _setDate(DateTime(d.year + 1, d.month, d.day)),
                   ),
                   const SizedBox(height: 14),
 
@@ -228,17 +231,11 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
           subtitle: 'Como avalias a qualidade do teu sono na última noite?',
           child: _SingleChoiceGrid(
             items: const [
-              _Choice(
-                id: 'Muito Boa',
-                icon: HabittusIcons.moodVeryGood,
-              ),
+              _Choice(id: 'Muito Boa', icon: HabittusIcons.moodVeryGood),
               _Choice(id: 'Boa', icon: HabittusIcons.moodGood),
               _Choice(id: 'OK', icon: HabittusIcons.moodNeutral),
               _Choice(id: 'Má', icon: HabittusIcons.moodBad),
-              _Choice(
-                id: 'Muito Má',
-                icon: HabittusIcons.moodVeryBad,
-              ),
+              _Choice(id: 'Muito Má', icon: HabittusIcons.moodVeryBad),
             ],
             selectedId: sleepQuality,
             onSelect: (id) => setState(() => sleepQuality = id),
@@ -257,10 +254,7 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
               _Choice(id: 'Energia', icon: HabittusIcons.calories),
               _Choice(id: 'Grato', icon: HabittusIcons.heart),
               _Choice(id: 'Cansado', icon: HabittusIcons.bed),
-              _Choice(
-                id: 'Triste',
-                icon: HabittusIcons.moodBad,
-              ),
+              _Choice(id: 'Triste', icon: HabittusIcons.moodBad),
               _Choice(id: 'Aborrecido', icon: HabittusIcons.moodNeutral),
               _Choice(id: 'Ansioso', icon: HabittusIcons.psychology),
               _Choice(id: 'Calmo', icon: HabittusIcons.spa),
@@ -290,10 +284,7 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
               _Choice(id: 'Relaxado', icon: HabittusIcons.calm),
               _Choice(id: 'Stress', icon: HabittusIcons.stress),
               _Choice(id: 'Enxaqueca', icon: HabittusIcons.calories),
-              _Choice(
-                id: 'Alongamentos',
-                icon: HabittusIcons.activity,
-              ),
+              _Choice(id: 'Alongamentos', icon: HabittusIcons.activity),
               _Choice(id: 'Bem', icon: HabittusIcons.check),
             ],
             selected: health,
@@ -496,51 +487,51 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
   /// Grava os dados do humor na base de dados
   Future<void> _saveData() async {
     final controller = context.read<MoodController>();
-    
+
     // Limpar dados antigos do controller e definir novos
     controller.clearAllData();
-    
+
     // Definir qualidade do sono
     controller.setSleepQuality(sleepQuality);
-    
+
     // Definir notas
     controller.setNotes(notesCtrl.text.isNotEmpty ? notesCtrl.text : null);
-    
+
     // Definir emoções
     for (final emotion in emotions) {
       controller.toggleEmotion(emotion);
     }
-    
+
     // Definir saúde
     for (final item in health) {
       controller.toggleHealth(item);
     }
-    
+
     // Definir comida
     for (final item in food) {
       controller.toggleFood(item);
     }
-    
+
     // Definir tempo/clima
     for (final item in weather) {
       controller.toggleWeather(item);
     }
-    
+
     // Definir dados femininos
     controller.setTookPill(tookPillToday == true);
     controller.setHadSex(hadSexToday == true);
     controller.setUsedProtection(usedProtection == true);
-    
+
     // Definir fluxo menstrual
     if (menstrualFlow != null) {
       controller.setMenstrualFlowFromString(menstrualFlow!);
     }
-    
+
     // Definir sintomas
     for (final symptom in menstruationSymptoms) {
       controller.toggleSymptomFromString(symptom);
     }
-    
+
     print('[MOOD SCREEN] Dados a gravar:');
     print('  - Nível: ${controller.selectedLevel}');
     print('  - Sono: $sleepQuality');
@@ -554,10 +545,10 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
     print('  - Sintomas menstruação (UI): $menstruationSymptoms');
     print('  - Tomou pílula: $tookPillToday');
     print('  - Atividade sexual: $hadSexToday');
-    
+
     // Chamar save() do controller para gravar na BD
-    await controller.save(isFemale: widget.isFemale);
-    
+    await controller.save();
+
     // Mostrar feedback
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -565,8 +556,8 @@ class _MoodInquiryScreenState extends State<MoodInquiryScreen> {
           content: Row(
             children: [
               Icon(
-                controller.saveStatus == MoodSaveStatus.saved 
-                    ? HabittusIcons.check 
+                controller.saveStatus == MoodSaveStatus.saved
+                    ? HabittusIcons.check
                     : Icons.error,
                 color: Colors.white,
               ),
@@ -602,11 +593,7 @@ class _MoodGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const items = [
-      _MoodItem(
-        'Péssimo',
-        MoodLevel.veryBad,
-        HabittusIcons.moodVeryBad,
-      ),
+      _MoodItem('Péssimo', MoodLevel.veryBad, HabittusIcons.moodVeryBad),
       _MoodItem('Mau', MoodLevel.bad, HabittusIcons.moodBad),
       _MoodItem('Ok', MoodLevel.neutral, HabittusIcons.moodNeutral),
       _MoodItem('Bom', MoodLevel.good, HabittusIcons.moodGood),
@@ -868,7 +855,9 @@ class _ChoiceButton extends StatelessWidget {
           color: selected ? const Color(0xFFE4EAD8) : const Color(0xFFF6F8F0),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? HabittusIcons.primaryColor : const Color(0xFFD9E1D0),
+            color: selected
+                ? HabittusIcons.primaryColor
+                : const Color(0xFFD9E1D0),
             width: 2,
           ),
         ),
@@ -879,14 +868,16 @@ class _ChoiceButton extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: selected 
+                color: selected
                     ? HabittusIcons.primaryColor.withOpacity(0.2)
                     : const Color(0xFFE4EAD8),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
-                icon, 
-                color: selected ? HabittusIcons.primaryColor : const Color(0xFF244A24),
+                icon,
+                color: selected
+                    ? HabittusIcons.primaryColor
+                    : const Color(0xFF244A24),
                 size: 22,
               ),
             ),
@@ -1007,17 +998,19 @@ class _MenstruationSymptomsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Usar os mesmos labels do enum CycleSymptom
     const items = [
-      _Choice(id: 'Dor lombar', icon: HabittusIcons.pain),
-      _Choice(id: 'Barriga inchada', icon: HabittusIcons.bloating),
-      _Choice(id: 'Aumento do apetite', icon: HabittusIcons.meal),
-      _Choice(id: 'Dor de cabeça', icon: HabittusIcons.psychology),
-      _Choice(id: 'Tonturas', icon: HabittusIcons.moodSwing),
-      _Choice(id: 'Enjoos', icon: HabittusIcons.sick),
-      _Choice(id: 'Borbulhas', icon: HabittusIcons.headache),
       _Choice(id: 'Cólicas', icon: HabittusIcons.cramps),
+      _Choice(id: 'Dor de cabeça', icon: HabittusIcons.psychology),
+      _Choice(id: 'Inchaço', icon: HabittusIcons.bloating),
       _Choice(id: 'Seios sensíveis', icon: HabittusIcons.heart),
-      _Choice(id: 'Sangramento', icon: HabittusIcons.water),
+      _Choice(id: 'Acne', icon: HabittusIcons.headache),
+      _Choice(id: 'Fadiga', icon: HabittusIcons.sick),
+      _Choice(id: 'Humor instável', icon: HabittusIcons.moodSwing),
+      _Choice(id: 'Dor lombar', icon: HabittusIcons.pain),
+      _Choice(id: 'Náusea', icon: HabittusIcons.sick),
+      _Choice(id: 'Desejos', icon: HabittusIcons.meal),
+      _Choice(id: 'Insónia', icon: HabittusIcons.sleep),
     ];
 
     return Wrap(
@@ -1045,13 +1038,13 @@ class _MenstrualFlowGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Usar os mesmos labels do enum MenstrualFlow
     const items = [
-      _Choice(id: 'Spots', icon: HabittusIcons.water),
-      _Choice(id: 'Muito leve', icon: HabittusIcons.water),
+      _Choice(id: 'Nenhum', icon: HabittusIcons.water),
+      _Choice(id: 'Spotting', icon: HabittusIcons.water),
       _Choice(id: 'Leve', icon: HabittusIcons.water),
       _Choice(id: 'Moderado', icon: HabittusIcons.water),
       _Choice(id: 'Intenso', icon: HabittusIcons.water),
-      _Choice(id: 'Muito intenso', icon: HabittusIcons.water),
     ];
 
     return Wrap(

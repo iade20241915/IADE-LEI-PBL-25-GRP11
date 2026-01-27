@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/habit_controller.dart';
+import '../core/database/supabase_service.dart';
 import '../models/habit.dart';
 import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_drawer.dart';
-import '../widgets/habittus_card.dart';
 import 'add_habit_screen.dart';
 import 'habit_detail_screen.dart';
 import 'habit_setup_screen.dart';
@@ -21,7 +21,7 @@ class HabitsScreen extends StatefulWidget {
 class _HabitsScreenState extends State<HabitsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final String userId = 'mock_user_123'; // TODO: Pegar do auth
+  String get userId => SupabaseService.instance.currentUserId?.toString() ?? '';
 
   @override
   void initState() {

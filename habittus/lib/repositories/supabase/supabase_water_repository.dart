@@ -17,7 +17,7 @@ class SupabaseWaterRepository implements WaterRepository {
 
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
-    
+
     try {
       // Buscar todos os registos do dia e somar
       final response = await _supabase
@@ -27,7 +27,7 @@ class SupabaseWaterRepository implements WaterRepository {
           .gte('intake_at', startOfDay.toIso8601String())
           .lt('intake_at', endOfDay.toIso8601String());
 
-      if (response == null || (response as List).isEmpty) {
+      if ((response as List).isEmpty) {
         return WaterLog(date: date, amountMl: 0, cups: 0);
       }
 
@@ -56,14 +56,12 @@ class SupabaseWaterRepository implements WaterRepository {
 
     try {
       // Inserir novo registo (cada save é uma nova entrada)
-      await _supabase
-          .from(SupabaseConfig.waterIntakeTable)
-          .insert({
-            'user_id': _userId,
-            'intake_at': log.date.toIso8601String(),
-            'amount_ml': log.totalMl,
-            'source': log.source.value,
-          });
+      await _supabase.from(SupabaseConfig.waterIntakeTable).insert({
+        'user_id': _userId,
+        'intake_at': log.date.toIso8601String(),
+        'amount_ml': log.totalMl,
+        'source': log.source.value,
+      });
     } catch (e) {
       print('Erro ao guardar água: $e');
       rethrow;
@@ -97,14 +95,12 @@ class SupabaseWaterRepository implements WaterRepository {
             .eq('water_intake_id', existing['water_intake_id']);
       } else {
         // Inserir novo registo
-        await _supabase
-            .from(SupabaseConfig.waterIntakeTable)
-            .insert({
-              'user_id': _userId,
-              'intake_at': log.date.toIso8601String(),
-              'amount_ml': log.totalMl,
-              'source': log.source.value,
-            });
+        await _supabase.from(SupabaseConfig.waterIntakeTable).insert({
+          'user_id': _userId,
+          'intake_at': log.date.toIso8601String(),
+          'amount_ml': log.totalMl,
+          'source': log.source.value,
+        });
       }
     } catch (e) {
       print('Erro ao guardar água: $e');
@@ -113,18 +109,19 @@ class SupabaseWaterRepository implements WaterRepository {
   }
 
   /// Adiciona quantidade de água (cria novo registo)
-  Future<void> addWater(int amountMl, {WaterSource source = WaterSource.manual}) async {
+  Future<void> addWater(
+    int amountMl, {
+    WaterSource source = WaterSource.manual,
+  }) async {
     if (_userId == 0) return;
 
     try {
-      await _supabase
-          .from(SupabaseConfig.waterIntakeTable)
-          .insert({
-            'user_id': _userId,
-            'intake_at': DateTime.now().toIso8601String(),
-            'amount_ml': amountMl,
-            'source': source.value,
-          });
+      await _supabase.from(SupabaseConfig.waterIntakeTable).insert({
+        'user_id': _userId,
+        'intake_at': DateTime.now().toIso8601String(),
+        'amount_ml': amountMl,
+        'source': source.value,
+      });
     } catch (e) {
       print('Erro ao adicionar água: $e');
       rethrow;

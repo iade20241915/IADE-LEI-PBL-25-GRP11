@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/habit_controller.dart';
+import '../core/database/supabase_service.dart';
 import '../models/habit.dart';
 import '../widgets/habittus_app_bar.dart';
 import '../widgets/habittus_card.dart';
@@ -138,7 +139,7 @@ class _HabitDashboardScreenState extends State<HabitDashboardScreen> {
       final log = HabitLog(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         habitId: widget.habit.id,
-        userId: 'mock_user_123',
+        userId: SupabaseService.instance.currentUserId?.toString() ?? '',
         timestamp: DateTime.now(),
         quantity: 1,
         notes: 'Recaída registada',
@@ -274,7 +275,7 @@ class _HabitDashboardScreenState extends State<HabitDashboardScreen> {
 
             // Saudação e contador principal
             Text(
-              'Olá, user_name',
+              'Olá, ${SupabaseService.instance.currentUserName ?? 'Utilizador'}',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),

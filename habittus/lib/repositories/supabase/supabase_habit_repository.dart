@@ -21,7 +21,7 @@ class SupabaseHabitRepository implements HabitRepository {
           .eq('user_id', _userId)
           .order('created_at', ascending: false);
 
-      if (response == null) return [];
+      //if (response == null) return [];
       return (response as List).map((json) => _fromJson(json)).toList();
     } catch (e) {
       print('Erro ao obter hábitos: $e');
@@ -65,17 +65,15 @@ class SupabaseHabitRepository implements HabitRepository {
       // Obter ou criar habit_type_id
       final typeId = await _getOrCreateHabitType(habit.category.label);
 
-      await _supabase
-          .from('habits')
-          .insert({
-            'user_id': _userId,
-            'habit_type_id': typeId,
-            'created_at': habit.createdAt.toIso8601String(),
-            'daysweek': 7,
-            'timesday': 1,
-            'moneysspent': 0,
-            'notes': habit.description,
-          });
+      await _supabase.from('habits').insert({
+        'user_id': _userId,
+        'habit_type_id': typeId,
+        'created_at': habit.createdAt.toIso8601String(),
+        'daysweek': 7,
+        'timesday': 1,
+        'moneysspent': 0,
+        'notes': habit.description,
+      });
     } catch (e) {
       print('Erro ao adicionar hábito: $e');
       rethrow;
@@ -89,10 +87,7 @@ class SupabaseHabitRepository implements HabitRepository {
 
       await _supabase
           .from('habits')
-          .update({
-            'habit_type_id': typeId,
-            'notes': habit.description,
-          })
+          .update({'habit_type_id': typeId, 'notes': habit.description})
           .eq('habit_id', int.parse(habit.id));
     } catch (e) {
       print('Erro ao atualizar hábito: $e');
@@ -103,10 +98,7 @@ class SupabaseHabitRepository implements HabitRepository {
   @override
   Future<void> deleteHabit(String id) async {
     try {
-      await _supabase
-          .from('habits')
-          .delete()
-          .eq('habit_id', int.parse(id));
+      await _supabase.from('habits').delete().eq('habit_id', int.parse(id));
     } catch (e) {
       print('Erro ao apagar hábito: $e');
       rethrow;
@@ -144,7 +136,11 @@ class SupabaseHabitRepository implements HabitRepository {
   }
 
   @override
-  Future<int> getTotalOccurrences(String habitId, DateTime startDate, DateTime endDate) async {
+  Future<int> getTotalOccurrences(
+    String habitId,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     return 0;
   }
 
@@ -159,12 +155,12 @@ class SupabaseHabitRepository implements HabitRepository {
   Future<Map<String, int>> getHabitCountByCategory() async {
     final habits = await getHabits(_userIdStr);
     final counts = <String, int>{};
-    
+
     for (final habit in habits) {
       final cat = habit.category.label;
       counts[cat] = (counts[cat] ?? 0) + 1;
     }
-    
+
     return counts;
   }
 
@@ -199,7 +195,7 @@ class SupabaseHabitRepository implements HabitRepository {
   Habit _fromJson(Map<String, dynamic> json) {
     final typeData = json['habit_types'] as Map<String, dynamic>?;
     final typeName = typeData?['habit_type'] as String? ?? 'Outro';
-    
+
     // Determinar categoria pelo nome
     final category = HabitCategory.values.firstWhere(
       (c) => c.label == typeName,

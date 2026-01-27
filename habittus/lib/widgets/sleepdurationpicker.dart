@@ -87,7 +87,9 @@ class _SleepDurationPickerState extends State<SleepDurationPicker> {
               data: SliderTheme.of(context).copyWith(
                 trackHeight: 8,
                 overlayShape: SliderComponentShape.noOverlay,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+                thumbShape: const RoundSliderThumbShape(
+                  enabledThumbRadius: 12,
+                ),
                 activeTrackColor: Colors.green.shade600,
                 inactiveTrackColor: const Color(0xFFEAF3E3),
                 thumbColor: Colors.green.shade700,
