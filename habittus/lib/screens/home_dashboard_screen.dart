@@ -75,6 +75,27 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     _loadData();
   }
 
+  // Helper para obter o último dia de um mês
+  int _daysInMonth(int year, int month) {
+    return DateTime(year, month + 1, 0).day;
+  }
+
+  // Helper para criar data validada (ajusta dia se necessário)
+  DateTime _safeDate(int year, int month, int day) {
+    // Normalizar mês (se < 1 ou > 12)
+    while (month < 1) {
+      month += 12;
+      year--;
+    }
+    while (month > 12) {
+      month -= 12;
+      year++;
+    }
+    final maxDay = _daysInMonth(year, month);
+    final safeDay = day > maxDay ? maxDay : day;
+    return DateTime(year, month, safeDay);
+  }
+
   @override
   Widget build(BuildContext context) {
     final waterController = context.watch<WaterController>();
@@ -120,10 +141,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 year: '${d.year}',
                 onDayPrev: () => _setDate(d.subtract(const Duration(days: 1))),
                 onDayNext: () => _setDate(d.add(const Duration(days: 1))),
-                onMonthPrev: () => _setDate(DateTime(d.year, d.month - 1, d.day)),
-                onMonthNext: () => _setDate(DateTime(d.year, d.month + 1, d.day)),
-                onYearPrev: () => _setDate(DateTime(d.year - 1, d.month, d.day)),
-                onYearNext: () => _setDate(DateTime(d.year + 1, d.month, d.day)),
+                onMonthPrev: () => _setDate(_safeDate(d.year, d.month - 1, d.day)),
+                onMonthNext: () => _setDate(_safeDate(d.year, d.month + 1, d.day)),
+                onYearPrev: () => _setDate(_safeDate(d.year - 1, d.month, d.day)),
+                onYearNext: () => _setDate(_safeDate(d.year + 1, d.month, d.day)),
               ),
               const SizedBox(height: 16),
 

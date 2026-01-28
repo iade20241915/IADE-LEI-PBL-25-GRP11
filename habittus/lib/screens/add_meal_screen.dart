@@ -349,6 +349,26 @@ class _AddMealScreenState extends State<AddMealScreen> {
     'Dezembro',
   ][d.month - 1];
 
+  // Helper para obter o último dia de um mês
+  int _daysInMonth(int year, int month) {
+    return DateTime(year, month + 1, 0).day;
+  }
+
+  // Helper para criar data validada (ajusta dia se necessário)
+  DateTime _safeDate(int year, int month, int day) {
+    while (month < 1) {
+      month += 12;
+      year--;
+    }
+    while (month > 12) {
+      month -= 12;
+      year++;
+    }
+    final maxDay = _daysInMonth(year, month);
+    final safeDay = day > maxDay ? maxDay : day;
+    return DateTime(year, month, safeDay);
+  }
+
   int get totalKcal => selectedItems.fold(0, (sum, item) => sum + item.kcal);
 
   String _formatCategory(String category) {
@@ -556,16 +576,16 @@ class _AddMealScreenState extends State<AddMealScreen> {
                     onDayNext: () =>
                         setState(() => d = d.add(const Duration(days: 1))),
                     onMonthPrev: () => setState(
-                      () => d = DateTime(d.year, d.month - 1, d.day),
+                      () => d = _safeDate(d.year, d.month - 1, d.day),
                     ),
                     onMonthNext: () => setState(
-                      () => d = DateTime(d.year, d.month + 1, d.day),
+                      () => d = _safeDate(d.year, d.month + 1, d.day),
                     ),
                     onYearPrev: () => setState(
-                      () => d = DateTime(d.year - 1, d.month, d.day),
+                      () => d = _safeDate(d.year - 1, d.month, d.day),
                     ),
                     onYearNext: () => setState(
-                      () => d = DateTime(d.year + 1, d.month, d.day),
+                      () => d = _safeDate(d.year + 1, d.month, d.day),
                     ),
                   ),
                   const SizedBox(height: 16),

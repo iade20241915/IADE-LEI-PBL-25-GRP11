@@ -15,32 +15,30 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(flex: 2),
-              
+
               // Logo Habittus
               Image.asset(
                 'assets/images/habittus_logo.png',
-                height: 120,
+                height: 420,
                 fit: BoxFit.contain,
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               Text(
                 'A sua jornada de bem-estar',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
               ),
-              
+
               const Spacer(flex: 2),
-              
+
               // Botão Login
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.login),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade700,
                     foregroundColor: Colors.white,
@@ -51,22 +49,20 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   child: const Text(
                     'Entrar',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Botão Registar
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: OutlinedButton(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.register),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.green.shade700,
                     side: BorderSide(color: Colors.green.shade700, width: 2),
@@ -76,14 +72,11 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   child: const Text(
                     'Criar Conta',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 48),
             ],
           ),

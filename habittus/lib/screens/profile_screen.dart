@@ -49,7 +49,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       initialDate: _selectedBirthDate ?? DateTime(1990, 1, 1),
       firstDate: DateTime(1920),
       lastDate: DateTime.now(),
-      locale: const Locale('pt', 'PT'),
     );
     if (picked != null) {
       setState(() => _selectedBirthDate = picked);
