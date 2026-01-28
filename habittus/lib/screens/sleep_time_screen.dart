@@ -212,7 +212,7 @@ class _SleepTimeScreenState extends State<SleepTimeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8F0),
-      drawer: const HabittusDrawer(userName: 'USER_NAME'),
+      drawer: const HabittusDrawer(),
       appBar: const HabittusAppBar(showBack: true),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddSleepDialog,

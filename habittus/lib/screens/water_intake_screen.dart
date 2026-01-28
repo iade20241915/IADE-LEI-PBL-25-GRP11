@@ -73,7 +73,7 @@ class _WaterIntakeScreenState extends State<WaterIntakeScreen> {
     final progress = (controller.totalMl / dailyGoalMl).clamp(0.0, 1.0);
 
     return Scaffold(
-      drawer: const HabittusDrawer(userName: 'USER_NAME'),
+      drawer: const HabittusDrawer(),
       appBar: const HabittusAppBar(showBack: true),
 
       floatingActionButton: WaterQuickAddFab(

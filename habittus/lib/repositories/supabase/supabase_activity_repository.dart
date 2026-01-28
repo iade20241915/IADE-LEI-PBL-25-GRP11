@@ -174,8 +174,8 @@ class SupabaseActivityRepository implements ActivityRepository {
 
       // ============================================================
       // QUERY: INSERT nova atividade
-      // INSERT INTO activity (user_id, activity_type_id, duration_min, steps, kcal, created_at)
-      // VALUES ($1, $2, $3, NULL, $4, $5) RETURNING activity_id;
+      // INSERT INTO activity (user_id, activity_type_id, duration_min, steps, kcal, notes, created_at)
+      // VALUES ($1, $2, $3, NULL, $4, $5, $6) RETURNING activity_id;
       // ============================================================
       final result = await _supabase
           .from('activity')
@@ -185,6 +185,7 @@ class SupabaseActivityRepository implements ActivityRepository {
             'duration_min': activity.durationMinutes,
             'steps': null,
             'kcal': activity.caloriesBurned,
+            'notes': activity.notes,  // ✅ CORRIGIDO: Agora grava notas
             'created_at': activity.timestamp.toIso8601String(),
           })
           .select('activity_id')
@@ -223,8 +224,8 @@ class SupabaseActivityRepository implements ActivityRepository {
   // ============================================================
   // Query SQL equivalente:
   // UPDATE activity
-  // SET activity_type_id = $1, duration_min = $2, kcal = $3
-  // WHERE activity_id = $4;
+  // SET activity_type_id = $1, duration_min = $2, kcal = $3, notes = $4
+  // WHERE activity_id = $5;
   // ============================================================
   @override
   Future<void> updateActivity(PhysicalActivity activity) async {
@@ -242,6 +243,7 @@ class SupabaseActivityRepository implements ActivityRepository {
             'activity_type_id': typeId,
             'duration_min': activity.durationMinutes,
             'kcal': activity.caloriesBurned,
+            'notes': activity.notes,  // ✅ CORRIGIDO: Agora atualiza notas
           })
           .eq('activity_id', int.parse(activity.id));
 
@@ -535,6 +537,7 @@ class SupabaseActivityRepository implements ActivityRepository {
       durationMinutes: json['duration_min'] as int? ?? 0,
       intensity: ActivityIntensity.moderate,
       caloriesBurned: json['kcal'] as int?,
+      notes: json['notes'] as String?,  // ✅ CORRIGIDO: Agora lê notas
     );
   }
 }

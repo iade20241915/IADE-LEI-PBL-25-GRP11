@@ -28,6 +28,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
   bool _hadSex = false;
   bool _usedProtection = false;
   bool _ovulation = false;
+  final TextEditingController _notesController = TextEditingController();  // ✅ NOVO: Campo notas
 
   @override
   void initState() {
@@ -37,6 +38,12 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -55,6 +62,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
         _tookPill = entry?.birthControlTaken ?? false;
         _hadSex = entry?.sexualActivity ?? false;
         _ovulation = entry?.ovulation ?? false;
+        _notesController.text = entry?.notes ?? '';  // ✅ NOVO: Carregar notas
       });
     }
   }
@@ -86,6 +94,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
       birthControlTaken: _tookPill,
       sexualActivity: _hadSex,
       ovulation: _ovulation,
+      notes: _notesController.text.isNotEmpty ? _notesController.text : null,  // ✅ NOVO: Gravar notas
     );
     
     await controller.saveEntry(entry);
@@ -112,7 +121,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const HabittusDrawer(userName: 'USER_NAME'),
+      drawer: const HabittusDrawer(),
       appBar: const HabittusAppBar(showBack: true),
       backgroundColor: const Color(0xFFF6F8F0),
       body: SafeArea(
@@ -166,6 +175,10 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
 
                 // Ovulação
                 _buildOvulationCard(),
+                const SizedBox(height: 16),
+
+                // ✅ NOVO: Card de Notas
+                _buildNotesCard(),
                 const SizedBox(height: 24),
 
                 // Botão Gravar
@@ -678,6 +691,29 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // ✅ NOVO: Card de Notas
+  Widget _buildNotesCard() {
+    return HabittusCard(
+      title: 'Notas',
+      subtitle: 'Adiciona observações sobre o teu dia',
+      child: TextField(
+        controller: _notesController,
+        maxLines: 3,
+        decoration: InputDecoration(
+          hintText: 'Escreve aqui as tuas notas...',
+          hintStyle: TextStyle(color: Colors.grey[400]),
+          filled: true,
+          fillColor: const Color(0xFFE4EAD8),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.all(16),
         ),
       ),
     );

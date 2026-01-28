@@ -154,7 +154,7 @@ class _HabitsScreenState extends State<HabitsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const HabittusDrawer(userName: 'USER_NAME'),
+      drawer: const HabittusDrawer(),
       appBar: const HabittusAppBar(showBack: true),
       backgroundColor: const Color(0xFFF6F8F0),
       body: SafeArea(
