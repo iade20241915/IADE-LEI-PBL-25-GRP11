@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Logo Habittus
                   Image.asset(
                     'assets/images/habittus_logo.png',
-                    height: 100,
+                    height: 400,
                     fit: BoxFit.contain,
                   ),
                   
